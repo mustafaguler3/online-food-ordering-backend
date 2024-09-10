@@ -5,9 +5,12 @@ import com.example.food_ordering.dto.TokenDto;
 import com.example.food_ordering.dto.UserDto;
 import com.example.food_ordering.entities.Role;
 import com.example.food_ordering.entities.User;
+import com.example.food_ordering.entities.VerificationToken;
 import com.example.food_ordering.repository.RoleRepository;
 import com.example.food_ordering.repository.UserRepository;
+import com.example.food_ordering.repository.VerificationTokenRepository;
 import com.example.food_ordering.service.AuthService;
+import com.example.food_ordering.service.EmailService;
 import com.example.food_ordering.service.UserDetailsImpl;
 import com.example.food_ordering.util.JWTProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.UUID;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -37,6 +41,10 @@ public class AuthServiceImpl implements AuthService {
     private JWTProvider jwtProvider;
     @Autowired
     private AuthenticationManager authenticationManager;
+    @Autowired
+    private EmailService emailService;
+    @Autowired
+    private VerificationTokenRepository verificationTokenRepository;
 
 
     @Override
@@ -82,6 +90,13 @@ public class AuthServiceImpl implements AuthService {
         user.setRoles(Collections.singleton(role));
 
         userRepository.save(user);
+
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = new VerificationToken();
+        verificationToken.setToken(token);
+        verificationToken.setUser(user);
+        verificationTokenRepository.save(verificationToken);
+        emailService.sendVerificationEmail(userDto,token);
     }
 
     @Override
@@ -104,6 +119,21 @@ public class AuthServiceImpl implements AuthService {
         }
 
         return userConverter.toDto(user);
+    }
+
+    @Override
+    public boolean verifyUser(String token) {
+        VerificationToken verifier = verificationTokenRepository.findByToken(token);
+
+        if (verifier == null){
+            throw new RuntimeException("Invalid token");
+        }
+        User user = verifier.getUser();
+        user.setEnabled(true);
+        userRepository.save(user);
+        verificationTokenRepository.delete(verifier);
+
+        return true;
     }
 }
 

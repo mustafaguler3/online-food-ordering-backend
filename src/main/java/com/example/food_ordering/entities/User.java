@@ -25,6 +25,9 @@ public class User {
     private String lastName;
     private boolean isEnabled;
 
+    @OneToOne(mappedBy = "user")
+    private VerificationToken verificationToken;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -35,7 +38,7 @@ public class User {
     public User() {
     }
 
-    public User(long id, String username, String email, String password, String phoneNumber, String profileImage, String firstName, String lastName, boolean isEnabled, Set<Role> roles) {
+    public User(long id, String username, String email, String password, String phoneNumber, String profileImage, String firstName, String lastName, boolean isEnabled, VerificationToken verificationToken, Set<Role> roles) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -45,6 +48,7 @@ public class User {
         this.firstName = firstName;
         this.lastName = lastName;
         this.isEnabled = isEnabled;
+        this.verificationToken = verificationToken;
         this.roles = roles;
     }
 }

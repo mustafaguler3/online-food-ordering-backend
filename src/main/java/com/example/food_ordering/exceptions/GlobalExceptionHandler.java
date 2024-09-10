@@ -26,6 +26,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
     }
 
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<?> handleIllegalStateException(IllegalStateException exception) {
+
+
+        if (exception.getStackTrace().length > 0){
+            StackTraceElement element = exception.getStackTrace()[0];
+            log.error("Exception occurred in class: {}, method: {}, line: {}",
+                    element.getClassName(), element.getMethodName(), element.getLineNumber());
+        }
+        return new ResponseEntity<>(exception.getMessage(),HttpStatus.BAD_REQUEST);
+    }
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<?> handleResourceNotFoundException(NullPointerException exception) {
 

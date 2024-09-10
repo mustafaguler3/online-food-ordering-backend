@@ -50,6 +50,16 @@ public class AuthController {
     }
 
 
+    @PostMapping("/verify")
+    public ResponseEntity<?> verifyUser(@RequestParam String token){
+        boolean isVerified = authService.verifyUser(token);
+        if (isVerified){
+            return ResponseEntity.ok("User verified successfully");
+        }else{
+            return ResponseEntity.badRequest().body("Verification token is invalid or expired");
+        }
+    }
+
 }
 
 

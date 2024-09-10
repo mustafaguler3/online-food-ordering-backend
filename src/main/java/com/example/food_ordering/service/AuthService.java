@@ -9,4 +9,5 @@ public interface AuthService {
     void register(UserDto userDto);
     UserDto findByUsername(String username);
     UserDto findByEmail(String email);
+    boolean verifyUser(String token);
 }
