@@ -22,6 +22,10 @@ public class JWTProvider {
 
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .claim("profileImage",userDetails.getUser().getProfileImage())
+                .claim("userName",userDetails.getUsername())
+                .claim("firstName",userDetails.getUser().getFirstName())
+                .claim("lastName",userDetails.getUser().getLastName())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration * 60 * 1000))
                 .signWith(SignatureAlgorithm.HS512, secret)

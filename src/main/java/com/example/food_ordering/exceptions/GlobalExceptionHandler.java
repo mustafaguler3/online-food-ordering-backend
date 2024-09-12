@@ -27,6 +27,19 @@ public class GlobalExceptionHandler {
     }
 
 
+
+    @ExceptionHandler(ArrayIndexOutOfBoundsException.class)
+    public ResponseEntity<?> handleArrayIndexOutOfBoundsException(ArrayIndexOutOfBoundsException exception) {
+
+
+        if (exception.getStackTrace().length > 0){
+            StackTraceElement element = exception.getStackTrace()[0];
+            log.error("Exception occurred in class: {}, method: {}, line: {}",
+                    element.getClassName(), element.getMethodName(), element.getLineNumber());
+        }
+        return new ResponseEntity<>(exception.getMessage(),HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<?> handleIllegalStateException(IllegalStateException exception) {
 

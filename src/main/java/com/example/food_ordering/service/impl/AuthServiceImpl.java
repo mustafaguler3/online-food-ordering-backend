@@ -11,6 +11,7 @@ import com.example.food_ordering.repository.UserRepository;
 import com.example.food_ordering.repository.VerificationTokenRepository;
 import com.example.food_ordering.service.AuthService;
 import com.example.food_ordering.service.EmailService;
+import com.example.food_ordering.service.FileStorageService;
 import com.example.food_ordering.service.UserDetailsImpl;
 import com.example.food_ordering.util.JWTProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -45,6 +47,8 @@ public class AuthServiceImpl implements AuthService {
     private EmailService emailService;
     @Autowired
     private VerificationTokenRepository verificationTokenRepository;
+    @Autowired
+    private FileStorageService fileStorageService;
 
 
     @Override
@@ -61,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void register(UserDto userDto) {
+    public void register(UserDto userDto,MultipartFile profilePicture) {
         User user = new User();
         user.setEmail(userDto.getEmail());
         user.setUsername(userDto.getUsername());
@@ -88,6 +92,18 @@ public class AuthServiceImpl implements AuthService {
             roleRepository.save(newRole);
         }
         user.setRoles(Collections.singleton(role));
+
+        //MultipartFile profilePicture = userDto.getProfilePicture();
+
+        if (profilePicture != null && !profilePicture.isEmpty()){
+            try {
+                String fileName = fileStorageService.storeFile(profilePicture,"users");
+                user.setProfileImage(fileName);
+            }catch (Exception e){
+                e.printStackTrace();
+                throw new RuntimeException("Failed to upload profile picture");
+            }
+        }
 
         userRepository.save(user);
 

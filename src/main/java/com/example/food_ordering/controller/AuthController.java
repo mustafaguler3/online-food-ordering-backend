@@ -3,9 +3,12 @@ package com.example.food_ordering.controller;
 import com.example.food_ordering.dto.TokenDto;
 import com.example.food_ordering.dto.UserDto;
 import com.example.food_ordering.service.AuthService;
+import com.example.food_ordering.service.FileStorageService;
 import com.example.food_ordering.service.UserDetailsImpl;
 import com.example.food_ordering.util.JWTProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api")
@@ -24,6 +28,8 @@ public class AuthController {
     private AuthService authService;
     @Autowired
     private JWTProvider jwtProvider;
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserDto userDto){
@@ -44,13 +50,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserDto userDto){
-        authService.register(userDto);
+    public ResponseEntity<?> register(@RequestPart("user") UserDto userDto,
+                                      @RequestPart("profileImage") MultipartFile profilePicture){
+        authService.register(userDto,profilePicture);
         return ResponseEntity.ok(userDto);
     }
 
 
-    @PostMapping("/verify")
+    @GetMapping("/verify")
     public ResponseEntity<?> verifyUser(@RequestParam String token){
         boolean isVerified = authService.verifyUser(token);
         if (isVerified){
@@ -58,6 +65,16 @@ public class AuthController {
         }else{
             return ResponseEntity.badRequest().body("Verification token is invalid or expired");
         }
+    }
+
+    @GetMapping("/uploads/{fileType}/{filename:.+}")
+    public ResponseEntity<Resource> getImage(@PathVariable String filename,
+                                             @PathVariable String fileType) {
+
+        Resource file = fileStorageService.loadFile(filename,fileType);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"").body(file);
     }
 
 }
