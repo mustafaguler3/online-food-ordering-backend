@@ -25,6 +25,7 @@ public class FileStorageServiceImpl implements FileStorageService {
         this.fileLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
 
         try {
+            Files.createDirectories(this.fileLocation.resolve("restaurants"));
             Files.createDirectories(this.fileLocation.resolve("users"));
             Files.createDirectories(this.fileLocation.resolve("products"));
         } catch (Exception e) {

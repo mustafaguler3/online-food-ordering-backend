@@ -24,6 +24,8 @@ public class JWTProvider {
                 .setSubject(userDetails.getUsername())
                 .claim("profileImage",userDetails.getUser().getProfileImage())
                 .claim("userName",userDetails.getUsername())
+                .claim("email",userDetails.getUser().getEmail())
+                .claim("phoneNumber",userDetails.getUser().getPhoneNumber())
                 .claim("firstName",userDetails.getUser().getFirstName())
                 .claim("lastName",userDetails.getUser().getLastName())
                 .setIssuedAt(new Date())

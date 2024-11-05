@@ -4,12 +4,16 @@ import com.example.food_ordering.dto.ErrorDto;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 @Log4j2
@@ -61,6 +65,15 @@ public class GlobalExceptionHandler {
                     element.getClassName(), element.getMethodName(), element.getLineNumber());
         }
         return new ResponseEntity<>(exception.getMessage(),HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Map<String, String> handleBadCredentials(BadCredentialsException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "Unauthorized");
+        response.put("message", "Invalid email or password.");
+        return response;
     }
 }
 
