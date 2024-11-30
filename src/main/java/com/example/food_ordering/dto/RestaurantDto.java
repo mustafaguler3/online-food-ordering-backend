@@ -24,5 +24,5 @@ public class RestaurantDto {
     private double discountPercent;
     private double maxDiscountAmount;
     private String restaurantIcon;
-    //private List<Product> products = new ArrayList<>();
+    private List<ProductDto> products;
 }

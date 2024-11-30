@@ -26,4 +26,13 @@ public class ProductsServiceImpl implements ProductService {
 
         return productDtos;
     }
+
+    @Override
+    public ProductDto getProduct(int id) {
+        var product = productRepository.findById((long) id).orElse(null);
+        if (product!=null) {
+            return dtoConverter.toProductDto(product);
+        }
+        return null;
+    }
 }

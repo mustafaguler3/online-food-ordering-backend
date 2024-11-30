@@ -8,7 +8,9 @@ import com.example.food_ordering.repository.RestaurantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class DTOConverter {
@@ -24,9 +26,9 @@ public class DTOConverter {
         product.setName(productDto.getName());
         product.setFoodImageUrls(productDto.getFoodImageUrls());
 
-
         return product;
     }
+
 
     public ProductDto toProductDto(Product product) {
         ProductDto productDto = new ProductDto();
@@ -36,13 +38,7 @@ public class DTOConverter {
         productDto.setPrice(product.getPrice());
         productDto.setName(product.getName());
         productDto.setFoodImageUrls(product.getFoodImageUrls());
-
-        Restaurant restaurant =
-                restaurantRepository.findById(product.getRestaurant().getId());
-
-        var restaurantDto = toRestaurantDto(restaurant);
-
-        productDto.setRestaurant(restaurantDto);
+        productDto.setRestaurantId(product.getRestaurant().getId());
 
         return productDto;
     }
@@ -57,8 +53,9 @@ public class DTOConverter {
         restaurant.setDiscountPercent(restaurantDto.getDiscountPercent());
         restaurant.setDistance(restaurantDto.getDistance());
         restaurant.setDeliveryTime(restaurantDto.getDeliveryTime());
-        restaurant.setMaxDiscountAmount(restaurantDto.getMaxDiscountAmount());
+        //restaurant.setMaxDiscountAmount(restaurantDto.getMaxDiscountAmount());
         restaurant.setRestaurantIcon(restaurantDto.getRestaurantIcon());
+
 
         return restaurant;
     }
@@ -72,9 +69,14 @@ public class DTOConverter {
         restaurantDto.setDiscountDescription(restaurant.getDiscountDescription());
         restaurantDto.setDiscountPercent(restaurant.getDiscountPercent());
         restaurantDto.setDistance(restaurant.getDistance());
+        restaurantDto.setLocation(restaurant.getLocation());
         restaurantDto.setDeliveryTime(restaurant.getDeliveryTime());
-        restaurantDto.setMaxDiscountAmount(restaurant.getMaxDiscountAmount());
+        //restaurantDto.setMaxDiscountAmount(restaurant.getMaxDiscountAmount());
         restaurantDto.setRestaurantIcon(restaurant.getRestaurantIcon());
+
+        List<ProductDto> products = restaurant.getProducts().stream().map(this::toProductDto).toList();
+
+        restaurantDto.setProducts(products);
 
         return restaurantDto;
     }

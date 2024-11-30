@@ -46,7 +46,7 @@ public class DataSeed implements CommandLineRunner {
         r1.setBestSeller(true);
         r1.setDiscountDescription("upto $2 50% OFF");
         r1.setDiscountPercent(50.0);
-        r1.setMaxDiscountAmount(2.0);
+        //r1.setMaxDiscountAmount(2.0);
         r1.setRestaurantIcon("domino.png");
 
         Product p1 = new Product();

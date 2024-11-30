@@ -1,5 +1,6 @@
 package com.example.food_ordering.entities;
 
+import com.example.food_ordering.enums.ProductCategory;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,6 +22,21 @@ public class Product {
     @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
+
+    @ElementCollection
+    @CollectionTable(name = "product_sizes", joinColumns = @JoinColumn(name = "product_id"))
+    private List<String> sizes; // like S, M, L, XL
+
+    @Enumerated(EnumType.STRING)
+    private ProductCategory category; // like Pizza, Burger, Döner
+
+    @ElementCollection
+    @CollectionTable(name = "product_colors", joinColumns = @JoinColumn(name = "product_id"))
+    private List<String> colors; // Ör: for different color options (Opsiyonel)
+
+    private boolean isAvailable;
+
+    private int quantity;
 
     public Product(int id, String name, double price, String description, List<String> foodImageUrls) {
         this.id = id;

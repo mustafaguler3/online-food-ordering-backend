@@ -23,9 +23,9 @@ public class Restaurant {
     private boolean bestSeller;
     private String discountDescription;
     private double discountPercent;
-    private double maxDiscountAmount;
+    private double price;
     private String restaurantIcon;
-    @OneToMany(mappedBy = "restaurant",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "restaurant",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     private List<Product> products = new ArrayList<>();
 
 
