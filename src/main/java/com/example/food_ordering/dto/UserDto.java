@@ -1,11 +1,11 @@
 package com.example.food_ordering.dto;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class UserDto {
     private long id;
@@ -17,4 +17,5 @@ public class UserDto {
     private String firstName;
     private String lastName;
     private boolean isEnabled;
+
 }

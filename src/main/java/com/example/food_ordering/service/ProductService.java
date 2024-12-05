@@ -9,4 +9,6 @@ import java.util.List;
 public interface ProductService {
     List<ProductDto> getAllProducts();
     ProductDto getProduct(int id);
+    List<ProductDto> getProductsByRestaurantId(int restaurantId);
+    List<ProductDto> findByCategory(long categoryId);
 }

@@ -25,8 +25,8 @@ public class RestaurantController {
     }
 
     @GetMapping("/restaurants/{id}")
-    public ResponseEntity<RestaurantDto> getRestaurantById(@PathVariable("id") int id){
-        var restaurant = restaurantService.getRestaurantById((long) id);
+    public ResponseEntity<RestaurantDto> getRestaurantById(@PathVariable("id") long id){
+        var restaurant = restaurantService.getRestaurantById(id);
         if (restaurant == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

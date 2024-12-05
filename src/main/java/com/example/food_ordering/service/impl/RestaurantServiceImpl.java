@@ -2,6 +2,7 @@ package com.example.food_ordering.service.impl;
 
 import com.example.food_ordering.dto.RestaurantDto;
 import com.example.food_ordering.entities.Restaurant;
+import com.example.food_ordering.repository.ProductRepository;
 import com.example.food_ordering.repository.RestaurantRepository;
 import com.example.food_ordering.service.RestaurantService;
 import com.example.food_ordering.util.DTOConverter;
@@ -15,6 +16,8 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Autowired
     private RestaurantRepository restaurantRepository;
+    @Autowired
+    private ProductRepository productRepository;
     @Autowired
     private DTOConverter dtoConverter;
 

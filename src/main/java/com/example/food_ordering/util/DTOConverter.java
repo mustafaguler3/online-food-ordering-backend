@@ -1,9 +1,7 @@
 package com.example.food_ordering.util;
 
-import com.example.food_ordering.dto.ProductDto;
-import com.example.food_ordering.dto.RestaurantDto;
-import com.example.food_ordering.entities.Product;
-import com.example.food_ordering.entities.Restaurant;
+import com.example.food_ordering.dto.*;
+import com.example.food_ordering.entities.*;
 import com.example.food_ordering.repository.RestaurantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,6 +16,31 @@ public class DTOConverter {
     @Autowired
     private RestaurantRepository restaurantRepository;
 
+
+    public User toUserEntity(UserDto userDto){
+        User user = new User();
+        user.setId(userDto.getId());
+        user.setEmail(userDto.getEmail());
+        user.setFirstName(userDto.getFirstName());
+        user.setLastName(userDto.getLastName());
+        user.setPassword(userDto.getPassword());
+        user.setPhoneNumber(userDto.getPhoneNumber());
+        user.setProfileImage(userDto.getProfileImage());
+
+        return user;
+    }
+    public UserDto toUserDto(User user){
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setEmail(user.getEmail());
+        userDto.setFirstName(user.getFirstName());
+        userDto.setLastName(user.getLastName());
+        userDto.setPassword(user.getPassword());
+        userDto.setPhoneNumber(user.getPhoneNumber());
+        userDto.setProfileImage(user.getProfileImage());
+
+        return userDto;
+    }
     public Product toProduct(ProductDto productDto) {
         Product product = new Product();
         product.setDescription(productDto.getDescription());
@@ -33,7 +56,7 @@ public class DTOConverter {
     public ProductDto toProductDto(Product product) {
         ProductDto productDto = new ProductDto();
         productDto.setDescription(product.getDescription());
-
+        productDto.setCategory(product.getCategory().getName());
         productDto.setId(product.getId());
         productDto.setPrice(product.getPrice());
         productDto.setName(product.getName());
@@ -80,4 +103,65 @@ public class DTOConverter {
 
         return restaurantDto;
     }
+
+    public Basket toBasketEntity(BasketDto basketDto) {
+        Basket basket = new Basket();
+        basket.setId(basketDto.getId());
+        basket.setTotalPrice(basketDto.getTotalPrice());
+        basket.setUser(toUserEntity(basketDto.getUser()));
+        basket.setBasketItems(basketDto.getItems().stream().map(this::toBasketItemEntity).collect(Collectors.toList()));
+
+        return basket;
+    }
+
+    public BasketDto toBasketDto(Basket basket){
+        BasketDto basketDto = new BasketDto();
+        basketDto.setId(basket.getId());
+        basketDto.setTotalPrice(basket.getTotalPrice());
+        UserDto userDto = toUserDto(basket.getUser());
+        basketDto.setUser(userDto);
+        List<BasketItemDto> items = basket.getBasketItems().stream().map(this::toBasketItemDto).collect(Collectors.toList());
+        basketDto.setItems(items);
+        return basketDto;
+    }
+
+    public BasketItem toBasketItemEntity(BasketItemDto basketItemDto){
+        BasketItem basketItem = new BasketItem();
+        basketItem.setId(basketItemDto.getId());
+        Product product = toProduct(basketItemDto.getProduct());
+        basketItem.setProduct(product);
+        basketItem.setQuantity(basketItemDto.getQuantity());
+        return basketItem;
+    }
+
+    public BasketItemDto toBasketItemDto(BasketItem basketItem){
+        BasketItemDto basketItemDto = new BasketItemDto();
+        basketItemDto.setId(basketItem.getId());
+        ProductDto productDto = toProductDto(basketItem.getProduct());
+        basketItemDto.setProduct(productDto);
+        basketItemDto.setQuantity(basketItem.getQuantity());
+        return basketItemDto;
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

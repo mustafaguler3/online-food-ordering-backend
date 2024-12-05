@@ -27,8 +27,9 @@ public class Product {
     @CollectionTable(name = "product_sizes", joinColumns = @JoinColumn(name = "product_id"))
     private List<String> sizes; // like S, M, L, XL
 
-    @Enumerated(EnumType.STRING)
-    private ProductCategory category; // like Pizza, Burger, Döner
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     @ElementCollection
     @CollectionTable(name = "product_colors", joinColumns = @JoinColumn(name = "product_id"))
