@@ -1,5 +1,6 @@
 package com.example.food_ordering.filter;
 
+import com.example.food_ordering.service.UserDetailsImpl;
 import com.example.food_ordering.service.UserDetailsServiceImpl;
 import com.example.food_ordering.util.JWTProvider;
 import jakarta.servlet.FilterChain;
@@ -7,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,7 +22,9 @@ import java.io.IOException;
 @Log4j2
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    @Autowired
     private JWTProvider jwtProvider;
+    @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
     public JwtAuthenticationFilter(JWTProvider jwtProvider, UserDetailsServiceImpl userDetailsService) {
@@ -35,8 +39,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (token != null && jwtProvider.validateToken(token)) {
                 String email = jwtProvider.getUsernameFromJwtToken(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
+                UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(email);
+                UsernamePasswordAuthenticationToken authenticationToken =
+                        new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
 
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 

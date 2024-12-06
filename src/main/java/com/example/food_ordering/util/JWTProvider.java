@@ -1,6 +1,7 @@
 package com.example.food_ordering.util;
 
 import com.example.food_ordering.service.UserDetailsImpl;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,14 +23,15 @@ public class JWTProvider {
 
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
-                .claim("profileImage",userDetails.getUser().getProfileImage())
+                .claim("userId",userDetails.getUserId())
+                .claim("profileImage",userDetails.user.getProfileImage())
                 .claim("userName",userDetails.getUsername())
-                .claim("email",userDetails.getUser().getEmail())
-                .claim("phoneNumber",userDetails.getUser().getPhoneNumber())
-                .claim("firstName",userDetails.getUser().getFirstName())
-                .claim("lastName",userDetails.getUser().getLastName())
+                .claim("email",userDetails.user.getEmail())
+                .claim("phoneNumber",userDetails.user.getPhoneNumber())
+                .claim("firstName",userDetails.user.getFirstName())
+                .claim("lastName",userDetails.user.getLastName())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiration * 60 * 1000))
+                .setExpiration(new Date(System.currentTimeMillis() + (long) expiration * 1000))
                 .signWith(SignatureAlgorithm.HS512, secret)
                 .compact();
     }
@@ -41,6 +43,15 @@ public class JWTProvider {
                .getBody()
                .getSubject();
     }
+
+    public Long extractUserIdFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(secret)
+                .parseClaimsJws(token)
+                .getBody();
+        return Long.parseLong(claims.get("userId").toString());
+    }
+
 
     public boolean validateToken(String token){
         try {

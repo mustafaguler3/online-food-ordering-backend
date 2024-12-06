@@ -40,7 +40,7 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        if (!userDetails.getUser().isEnabled()) {
+        if (!userDetails.user.isEnabled()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Please, firstly verify your email address");
         }
 

@@ -1,15 +1,17 @@
 package com.example.food_ordering.service;
 
 import com.example.food_ordering.entities.User;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 
+
 public class UserDetailsImpl implements UserDetails {
 
-    private User user;
+    public User user;
 
     public UserDetailsImpl(User user) {
         this.user = user;
@@ -23,8 +25,8 @@ public class UserDetailsImpl implements UserDetails {
                 .toList();
     }
 
-    public User getUser() {
-        return user;
+    public Long getUserId(){
+        return user.getId();
     }
 
     @Override

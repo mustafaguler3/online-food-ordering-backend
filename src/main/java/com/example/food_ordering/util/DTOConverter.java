@@ -1,7 +1,10 @@
 package com.example.food_ordering.util;
 
+import com.example.food_ordering.converter.UserConverter;
 import com.example.food_ordering.dto.*;
 import com.example.food_ordering.entities.*;
+import com.example.food_ordering.repository.BasketRepository;
+import com.example.food_ordering.repository.ProductRepository;
 import com.example.food_ordering.repository.RestaurantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -15,32 +18,14 @@ public class DTOConverter {
 
     @Autowired
     private RestaurantRepository restaurantRepository;
+    @Autowired
+    private UserConverter userConverter;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private BasketRepository basketRepository;
 
 
-    public User toUserEntity(UserDto userDto){
-        User user = new User();
-        user.setId(userDto.getId());
-        user.setEmail(userDto.getEmail());
-        user.setFirstName(userDto.getFirstName());
-        user.setLastName(userDto.getLastName());
-        user.setPassword(userDto.getPassword());
-        user.setPhoneNumber(userDto.getPhoneNumber());
-        user.setProfileImage(userDto.getProfileImage());
-
-        return user;
-    }
-    public UserDto toUserDto(User user){
-        UserDto userDto = new UserDto();
-        userDto.setId(user.getId());
-        userDto.setEmail(user.getEmail());
-        userDto.setFirstName(user.getFirstName());
-        userDto.setLastName(user.getLastName());
-        userDto.setPassword(user.getPassword());
-        userDto.setPhoneNumber(user.getPhoneNumber());
-        userDto.setProfileImage(user.getProfileImage());
-
-        return userDto;
-    }
     public Product toProduct(ProductDto productDto) {
         Product product = new Product();
         product.setDescription(productDto.getDescription());
@@ -108,8 +93,9 @@ public class DTOConverter {
         Basket basket = new Basket();
         basket.setId(basketDto.getId());
         basket.setTotalPrice(basketDto.getTotalPrice());
-        basket.setUser(toUserEntity(basketDto.getUser()));
-        basket.setBasketItems(basketDto.getItems().stream().map(this::toBasketItemEntity).collect(Collectors.toList()));
+        basket.setUser(userConverter.toEntity(basketDto.getUser()));
+        basket.setBasketItems(basketDto.getItems().stream().map(this::toBasketItemEntity)
+                .collect(Collectors.toSet()));
 
         return basket;
     }
@@ -118,19 +104,27 @@ public class DTOConverter {
         BasketDto basketDto = new BasketDto();
         basketDto.setId(basket.getId());
         basketDto.setTotalPrice(basket.getTotalPrice());
-        UserDto userDto = toUserDto(basket.getUser());
-        basketDto.setUser(userDto);
-        List<BasketItemDto> items = basket.getBasketItems().stream().map(this::toBasketItemDto).collect(Collectors.toList());
+        basketDto.setUser(userConverter.toDto(basket.getUser()));
+        List<BasketItemDto> items =
+                basket.getBasketItems().stream().map(this::toBasketItemDto).collect(Collectors.toList());
         basketDto.setItems(items);
+        basketDto.setCreatedAt(basket.getCreatedAt());
+        basketDto.setUpdatedAt(basket.getUpdatedAt());
+        basketDto.setStatus("Active");
         return basketDto;
     }
 
     public BasketItem toBasketItemEntity(BasketItemDto basketItemDto){
         BasketItem basketItem = new BasketItem();
         basketItem.setId(basketItemDto.getId());
-        Product product = toProduct(basketItemDto.getProduct());
-        basketItem.setProduct(product);
+        Optional<Product> product = productRepository.findById(basketItemDto.getProductId());
+        basketItem.setProduct(product.get());
         basketItem.setQuantity(basketItemDto.getQuantity());
+
+        Basket basket = basketRepository.findById(basketItemDto.getBasketId()).get();
+
+        basketItem.setBasket(basket);
+
         return basketItem;
     }
 
@@ -138,8 +132,9 @@ public class DTOConverter {
         BasketItemDto basketItemDto = new BasketItemDto();
         basketItemDto.setId(basketItem.getId());
         ProductDto productDto = toProductDto(basketItem.getProduct());
-        basketItemDto.setProduct(productDto);
+        basketItemDto.setProductId((long) basketItem.getProduct().getId());
         basketItemDto.setQuantity(basketItem.getQuantity());
+        basketItemDto.setBasketId(basketItem.getBasket().getId());
         return basketItemDto;
     }
 }

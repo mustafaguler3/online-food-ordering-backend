@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -19,6 +21,15 @@ import java.util.Map;
 @Log4j2
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            errors.put(error.getField(), error.getDefaultMessage());
+        }
+        return ResponseEntity.badRequest().body(errors);
+    }
+
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<?> handleUsernameNotFoundException(UsernameNotFoundException ex, WebRequest request) {
         ErrorDto errorDto = new ErrorDto();
@@ -26,6 +37,23 @@ public class GlobalExceptionHandler {
         errorDto.setPath(request.getDescription(false));
         errorDto.setMessage(ex.getMessage());
         errorDto.setTrace(ex.getStackTrace().toString());
+
+        return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(BasketNotFoundException.class)
+    public ResponseEntity<?> handleBasketNotFoundException(BasketNotFoundException ex, WebRequest request) {
+        ErrorDto errorDto = new ErrorDto();
+        errorDto.setTimestamp(new Timestamp(System.currentTimeMillis() *10 *60).toLocalDateTime());
+        errorDto.setPath(request.getDescription(false));
+        errorDto.setMessage(ex.getMessage());
+        errorDto.setTrace(ex.getStackTrace().toString());
+
+        if (ex.getStackTrace().length > 0){
+            StackTraceElement element = ex.getStackTrace()[0];
+            log.error("Exception occurred in class: {}, method: {}, line: {}",
+                    element.getClassName(), element.getMethodName(), element.getLineNumber());
+        }
 
         return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
     }

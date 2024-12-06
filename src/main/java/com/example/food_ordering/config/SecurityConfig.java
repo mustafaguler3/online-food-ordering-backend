@@ -32,7 +32,6 @@ public class SecurityConfig {
             "/",
             "/api/**",
             "/api/login",
-            "/api/hotels",
             "/home",
             "/verify",
             "/*.css",

@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class BasketItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -19,9 +20,19 @@ public class BasketItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "basket_id")
     private Basket basket;
-    private int quantity;
-    private double totalPrice;
 
+    private int quantity;      // Ürün miktarı
+    private double unitPrice;  // Ürünün birim fiyatı
+    private double discount;   // Ürün bazında indirim
+    private double totalPrice; // Ürün toplam fiyatı (hesaplanır) // subTotal = unitPrice * quantity
+
+    public void calculateTotalPrice(){
+        this.totalPrice = (unitPrice * quantity) - discount;
+    }
+
+    public double calculateDiscountPercentage() {
+        return (discount / (unitPrice * quantity)) * 100;
+    }
 
 }
 

@@ -22,7 +22,14 @@ public class BasketDto {
 
     public BasketDto() {
     }
-
-
+    public BasketDto(int id, List<BasketItemDto> items, double totalPrice, UserDto user) {
+        this.id = id;
+        this.items = items;
+        this.totalPrice = totalPrice;
+        this.user = user;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        this.status = "active";  // default status
+    }
 
 }

@@ -8,9 +8,10 @@ import lombok.Setter;
 public class BasketItemDto {
 
     private int id;
-    private ProductDto product;
+    private Long productId;
     private int quantity;
     private double totalPrice;
+    private long basketId;
     private double price;
 
 }
