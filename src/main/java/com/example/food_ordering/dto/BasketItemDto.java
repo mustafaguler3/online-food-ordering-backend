@@ -7,9 +7,12 @@ import lombok.Setter;
 @Setter
 public class BasketItemDto {
 
-    private int id;
+    private Integer id;
     private Long productId;
+    private String productName;
+    private String productImage;
     private int quantity;
+    private double discount;
     private double totalPrice;
     private long basketId;
     private double price;

@@ -8,6 +8,7 @@ import com.example.food_ordering.entities.Basket;
 import com.example.food_ordering.entities.BasketItem;
 import com.example.food_ordering.entities.Product;
 import com.example.food_ordering.entities.User;
+import com.example.food_ordering.exceptions.BasketEmptyException;
 import com.example.food_ordering.exceptions.BasketNotFoundException;
 import com.example.food_ordering.exceptions.ProductNotFoundException;
 import com.example.food_ordering.exceptions.UserNotFoundException;
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -100,12 +102,30 @@ public class BasketServiceImpl implements BasketService {
     }
 
     @Override
-    public BasketDto removeFromCart(long userId, long productId) {
-        return null;
+    public BasketDto removeFromCart(long productId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        Basket basket = basketRepository.findByUserId(userDetails.user.getId()).get();
+
+        BasketItem basketItem = basket.getBasketItems()
+                .stream()
+                .filter(item -> item.getProduct().getId() == productId)
+                .findFirst()
+                .orElseThrow(() -> new ProductNotFoundException("Product not found in basket"));
+
+        basketItem.setQuantity(basketItem.getQuantity() - 1);
+        basketItem.calculateTotalPrice();
+        basket.getBasketItems().remove(basketItem);
+
+        basket.calculateTotals();
+        basketRepository.save(basket);
+
+        return dtoConverter.toBasketDto(basket);
     }
 
     @Override
-    public BasketDto updateCart(long userId, long productId, int quantity) {
+    public BasketDto updateBasket(long userId, long productId, int quantity) {
         return null;
     }
 
@@ -113,29 +133,20 @@ public class BasketServiceImpl implements BasketService {
     public BasketDto findBasketByUserId(long userId) {
         // Kullanıcının sepetini bul
         Basket basket = basketRepository.findByUserId(userId).orElse(null);
-
         // Eğer sepet yoksa boş bir DTO dön
         if (basket == null) {
             return new BasketDto(0, new ArrayList<>(), 0.0, null);
         }
-
         // Sepet boşsa direkt DTO dön
         if (basket.getBasketItems().isEmpty()) {
             return new BasketDto(basket.getId(), new ArrayList<>(), 0.0, userConverter.toDto(basket.getUser()));
         }
-
         // Sepet öğelerini DTO'ya dönüştür
-        List<BasketItemDto> basketItems = basket.getBasketItems()
+        List<BasketItemDto> basketItems =
+                basket.getBasketItems()
                 .stream()
-                .map(basketItem -> {
-                    BasketItemDto basketItemDto = new BasketItemDto();
-                    basketItemDto.setId(basketItem.getId());
-                    basketItemDto.setQuantity(basketItem.getQuantity());
-                    basketItemDto.setProductId((long) basketItem.getProduct().getId());
-                    basketItemDto.setPrice(basketItem.getProduct().getPrice());
-                    basketItemDto.setBasketId(basketItemDto.getBasketId());
-                    return basketItemDto;
-                })
+                .map(basketItem -> dtoConverter.toBasketItemDto(basketItem)
+                )
                 .collect(Collectors.toList());
 
         // Toplam fiyatı hesapla
@@ -144,12 +155,30 @@ public class BasketServiceImpl implements BasketService {
                 .mapToDouble(item -> item.getPrice() * item.getQuantity())
                 .sum();
 
-
-        return dtoConverter.toBasketDto(basket);
+        BasketDto basketDto = dtoConverter.toBasketDto(basket);
+        basketDto.setItems(basketItems);
+        basketDto.setTotalPrice(totalPrice);
+        return basketDto;
     }
 
     @Override
-    public boolean clearCart(long userId) {
-        return false;
+    public boolean clearBasket(long userId) {
+        UserDetailsImpl userDetails = currentUserProvider.getCurrentUserDetails();
+
+        Basket basket = basketRepository.findByUserId(userDetails.user.getId())
+                .orElseThrow(() -> new BasketNotFoundException("Your basket is empty"));
+
+        if (basket.getBasketItems().isEmpty()){
+            return false;
+        }
+        basket.getBasketItems().clear();
+        basket.calculateTotals();
+        basketRepository.delete(basket);
+        return true;
+    }
+
+    public String generateRandomBasketId() {
+        int randomId = ThreadLocalRandom.current().nextInt(100000, 999999);
+        return "BASKET-" + randomId;
     }
 }

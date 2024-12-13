@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 public class BasketDto {
-    private int id;
+    private Integer id;
     private List<BasketItemDto> items = new ArrayList<>();
     private double totalPrice;
     private double discount;
@@ -22,7 +22,7 @@ public class BasketDto {
 
     public BasketDto() {
     }
-    public BasketDto(int id, List<BasketItemDto> items, double totalPrice, UserDto user) {
+    public BasketDto(Integer id, List<BasketItemDto> items, double totalPrice, UserDto user) {
         this.id = id;
         this.items = items;
         this.totalPrice = totalPrice;
@@ -31,5 +31,6 @@ public class BasketDto {
         this.updatedAt = LocalDateTime.now();
         this.status = "active";  // default status
     }
+
 
 }

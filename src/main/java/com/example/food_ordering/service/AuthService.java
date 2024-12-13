@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface AuthService {
     TokenDto login(UserDto userDto);
     void register(UserDto userDto, MultipartFile profilePicture);
-    UserDto findByUsername(String username);
+    UserDetailsImpl findByUsername(String username);
     UserDto findByEmail(String email);
     boolean verifyUser(String token);
 }

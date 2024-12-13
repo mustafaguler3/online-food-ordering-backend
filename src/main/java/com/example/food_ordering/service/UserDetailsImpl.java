@@ -1,5 +1,6 @@
 package com.example.food_ordering.service;
 
+import com.example.food_ordering.dto.UserDto;
 import com.example.food_ordering.entities.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,6 +16,10 @@ public class UserDetailsImpl implements UserDetails {
 
     public UserDetailsImpl(User user) {
         this.user = user;
+    }
+
+    public UserDto getUserDto() {
+        return new UserDto(user.getId(), user.getUsername(), user.getEmail(),user.getPassword(),user.getPhoneNumber(),user.getProfileImage(),user.getFirstName(), user.getLastName());
     }
 
     @Override

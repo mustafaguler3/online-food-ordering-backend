@@ -36,6 +36,18 @@ public class BasketController {
         return ResponseEntity.ok("Product added successfully to basket");
     }
 
+    @DeleteMapping("/basket/delete")
+    public ResponseEntity<?> removeProductFromBasket(@RequestParam long productId){
+        basketService.removeFromCart(productId);
+        return ResponseEntity.ok("Product deleted successfully");
+    }
+
+    @DeleteMapping("/basket/clear")
+    public ResponseEntity<?> clearBasket(@RequestParam long userId){
+        basketService.clearBasket(userId);
+        return ResponseEntity.ok("Basket cleared successfully");
+    }
+
 }
 
 

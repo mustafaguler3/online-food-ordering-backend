@@ -19,6 +19,7 @@ public class Basket {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @OneToMany(mappedBy = "basket",fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private Set<BasketItem> basketItems = new HashSet<>();
     @OneToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)

@@ -18,4 +18,14 @@ public class UserDto {
     private String lastName;
     private boolean isEnabled;
 
+    public UserDto(long id, String username, String email, String password, String phoneNumber, String profileImage, String firstName, String lastName) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.profileImage = profileImage;
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
 }

@@ -1,24 +1,25 @@
-package com.example.food_ordering.util;
+package com.example.food_ordering.service;
 
-import com.example.food_ordering.service.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
-@Component
-public class JWTProvider {
+@Service
+public class JwtService {
 
     @Value("${jwt_token}")
     private String secret;
-    private final long ACCESS_TOKEN_EXPIRATION = 60 * 60 * 1000; // 15 minutes
+    private final long ACCESS_TOKEN_EXPIRATION = 15 * 60 * 1000; // 15 minutes
     private final long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-    public String generateToken(UserDetailsImpl userDetails){
+    public String generateToken(Authentication authentication){
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
                 .claim("userId",userDetails.getUserId())
@@ -34,21 +35,23 @@ public class JWTProvider {
                 .compact();
     }
 
-    public String generateRefreshToken(UserDetailsImpl userDetails) {
+    public String generateRefreshToken(Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
         return Jwts.builder()
                 .setSubject(userDetails.getUsername()) // veya userDetails.getUserId()
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION)) // Uzun süreli
+                .signWith(SignatureAlgorithm.HS512, secret) // Aynı secret ile imzalanır
                 .compact();
     }
 
     public String getUsernameFromJwtToken(String token){
         return Jwts.parser()
-               .setSigningKey(secret)
-               .parseClaimsJws(token)
-               .getBody()
-               .getSubject();
+                .setSigningKey(secret)
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
     public Long extractUserIdFromToken(String token) {
@@ -69,28 +72,3 @@ public class JWTProvider {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

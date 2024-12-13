@@ -19,7 +19,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendVerificationEmail(UserDto userDto, String token) {
         String subject = "MustFood verification email";
         String senderName = "MustFood";
-        String confirmationLink = "http://localhost:8080/api/verify?token=" + token;
+        String confirmationLink = "http://localhost:8080/api/auth/verify?token=" + token;
 
         String mailContent = "<p> Dear " +userDto.getUsername() + ", </p>";
         mailContent += "<p>Please click the link below to verify your email </p>";

@@ -7,9 +7,9 @@ import java.util.Optional;
 
 public interface BasketService {
     void addToCart(long productId, int quantity);
-    BasketDto removeFromCart(long userId,long productId);
-    BasketDto updateCart(long userId,long productId, int quantity);
+    BasketDto removeFromCart(long productId);
+    BasketDto updateBasket(long userId,long productId, int quantity);
     BasketDto findBasketByUserId(long userId);
-    boolean clearCart(long userId);
+    boolean clearBasket(long userId);
 
 }

@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -60,9 +62,10 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        String jwt = jwtProvider.generateToken(authentication);
+        String accessToken = jwtProvider.generateToken(userDetails);
+        String refreshToken = jwtProvider.generateRefreshToken(userDetails);
 
-        return new TokenDto(jwt);
+        return new TokenDto(accessToken,refreshToken);
     }
 
     @Override
@@ -72,14 +75,12 @@ public class AuthServiceImpl implements AuthService {
         user.setUsername(userDto.getUsername());
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         user.setFirstName(userDto.getFirstName());
-        user.setLastName(userDto.getLastName());
         user.setProfileImage(userDto.getProfileImage());
+        user.setLastName(userDto.getLastName());
         user.setPhoneNumber(userDto.getPhoneNumber());
         user.setEnabled(false);
 
-        if (findByUsername(userDto.getUsername()) != null){
-            throw new RuntimeException("Username already taken");
-        }
+
 
         if (findByEmail(userDto.getEmail()) != null){
             throw new RuntimeException("Email already taken");
@@ -94,7 +95,7 @@ public class AuthServiceImpl implements AuthService {
         }
         user.setRoles(Collections.singleton(role));
 
-        //MultipartFile profilePicture = userDto.getProfilePicture();
+        //MultipartFile profilePicture = userDto.getProfileImage();
 
         if (profilePicture != null && !profilePicture.isEmpty()){
             try {
@@ -117,22 +118,23 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserDto findByUsername(String username) {
-        User user = userRepository.findByUsername(username);
+    public UserDetailsImpl findByUsername(String username) {
+        Optional<User> user = userRepository.findByUsername(username);
 
-        if (user == null){
-            return null;
-        }
-
-        return userConverter.toDto(user);
+        return user.map(UserDetailsImpl::new).orElseThrow(() ->
+                new UsernameNotFoundException("User not found with username: " + username));
     }
+
 
     @Override
     public UserDto findByEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Email not found"));
+        Optional<User> user = userRepository.findByEmail(email);
 
-        return userConverter.toDto(user);
+        if (user.isEmpty()){
+            return null;
+        }
+
+        return userConverter.toDto(user.get());
     }
 
     @Override

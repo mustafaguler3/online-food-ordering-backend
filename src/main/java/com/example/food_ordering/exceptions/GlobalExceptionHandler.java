@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MultipartException;
 
 import java.sql.Timestamp;
 import java.util.HashMap;
@@ -39,6 +40,18 @@ public class GlobalExceptionHandler {
         errorDto.setTrace(ex.getStackTrace().toString());
 
         return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
+    }
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity handleFileUploadingError(MultipartException exception) {
+        log.warn("Failed to upload attachment", exception);
+
+        if (exception.getStackTrace().length > 0){
+            StackTraceElement element = exception.getStackTrace()[0];
+            log.error("Exception occurred in class: {}, method: {}, line: {}",
+                    element.getClassName(), element.getMethodName(), element.getLineNumber());
+        }
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+
     }
 
     @ExceptionHandler(BasketNotFoundException.class)

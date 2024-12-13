@@ -1,5 +1,8 @@
 package com.example.food_ordering.dto;
 
+import com.example.food_ordering.converter.UserConverter;
+import com.example.food_ordering.service.UserDetailsImpl;
+import com.example.food_ordering.util.DTOConverter;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,12 +10,14 @@ import lombok.Setter;
 @Setter
 public class TokenDto {
 
-    private String token;
+    private String accessToken;
+    private String refreshToken;
 
     public TokenDto() {
     }
 
-    public TokenDto(String token) {
-        this.token = token;
+    public TokenDto(String accessToken, String refreshToken) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
     }
 }

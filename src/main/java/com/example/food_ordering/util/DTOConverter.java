@@ -44,6 +44,7 @@ public class DTOConverter {
         productDto.setCategory(product.getCategory().getName());
         productDto.setId(product.getId());
         productDto.setPrice(product.getPrice());
+        productDto.setQuantity(product.getQuantity());
         productDto.setName(product.getName());
         productDto.setFoodImageUrls(product.getFoodImageUrls());
         productDto.setRestaurantId(product.getRestaurant().getId());
@@ -106,11 +107,15 @@ public class DTOConverter {
         basketDto.setTotalPrice(basket.getTotalPrice());
         basketDto.setUser(userConverter.toDto(basket.getUser()));
         List<BasketItemDto> items =
-                basket.getBasketItems().stream().map(this::toBasketItemDto).collect(Collectors.toList());
+                basket.getBasketItems()
+                        .stream()
+                        .map(this::toBasketItemDto).collect(Collectors.toList());
         basketDto.setItems(items);
         basketDto.setCreatedAt(basket.getCreatedAt());
         basketDto.setUpdatedAt(basket.getUpdatedAt());
+        basketDto.setDiscount(basket.getDiscount());
         basketDto.setStatus("Active");
+
         return basketDto;
     }
 
@@ -122,8 +127,8 @@ public class DTOConverter {
         basketItem.setQuantity(basketItemDto.getQuantity());
 
         Basket basket = basketRepository.findById(basketItemDto.getBasketId()).get();
-
         basketItem.setBasket(basket);
+
 
         return basketItem;
     }
@@ -131,10 +136,24 @@ public class DTOConverter {
     public BasketItemDto toBasketItemDto(BasketItem basketItem){
         BasketItemDto basketItemDto = new BasketItemDto();
         basketItemDto.setId(basketItem.getId());
-        ProductDto productDto = toProductDto(basketItem.getProduct());
-        basketItemDto.setProductId((long) basketItem.getProduct().getId());
+        if(basketItem.getProduct() != null) {
+            ProductDto productDto = toProductDto(basketItem.getProduct());
+            basketItemDto.setProductId((long) basketItem.getProduct().getId());
+            basketItemDto.setProductName(productDto.getName());
+            basketItemDto.setProductImage(
+                    productDto.getFoodImageUrls() != null && !productDto.getFoodImageUrls().isEmpty()
+                    ? productDto.getFoodImageUrls().get(0) : null
+            );
+        }
+
+        basketItemDto.setPrice(basketItem.getUnitPrice());
         basketItemDto.setQuantity(basketItem.getQuantity());
-        basketItemDto.setBasketId(basketItem.getBasket().getId());
+        if(basketItem.getBasket() != null){
+            basketItemDto.setBasketId(basketItem.getBasket().getId());
+        }
+
+        basketItemDto.setDiscount(basketItem.getDiscount());
+        basketItemDto.setTotalPrice(basketItem.getTotalPrice());
         return basketItemDto;
     }
 }
