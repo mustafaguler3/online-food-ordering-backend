@@ -1,5 +1,6 @@
-package com.example.food_ordering.entities;
+package com.example.food_ordering.dto;
 
+import com.example.food_ordering.entities.User;
 import com.example.food_ordering.enums.AddressType;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -7,14 +8,9 @@ import lombok.Setter;
 
 import java.util.Date;
 
-@Entity
 @Getter
 @Setter
-public class Address {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class AddressDto {
     private String firstName;
     private String lastName;
     private String addressLine1;
@@ -24,37 +20,6 @@ public class Address {
     private String country;
     private String zipCode;
     private String phone;
-    @Enumerated(EnumType.STRING)
     private AddressType type;
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id")
-    private User user;
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdDate;
-
-
-
-
-
-
-
+    private long userId;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

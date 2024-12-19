@@ -29,9 +29,14 @@ public class SecurityConfig {
     private UserDetailsServiceImpl userDetailsService;
 
     private final String[] publicUrl = {
-            "/",
+            "/api/user",
+            "/api/restaurants",
+            "/api/auth/uploads/**",
+            "/api/add-address",
             "/api/**",
-            "/api/login",
+            "/api/user/**",
+            "/api/auth/login",
+            "/api/auth/register",
             "/home",
             "/verify",
             "/*.css",
@@ -66,6 +71,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.cors(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.disable())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sessionManagement -> sessionManagement
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

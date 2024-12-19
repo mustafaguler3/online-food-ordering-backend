@@ -1,9 +1,7 @@
 package com.example.food_ordering.service.impl;
 
-import com.example.food_ordering.converter.UserConverter;
 import com.example.food_ordering.dto.BasketDto;
 import com.example.food_ordering.dto.BasketItemDto;
-import com.example.food_ordering.dto.UserDto;
 import com.example.food_ordering.entities.Basket;
 import com.example.food_ordering.entities.BasketItem;
 import com.example.food_ordering.entities.Product;
@@ -21,6 +19,8 @@ import com.example.food_ordering.util.CurrentUserProvider;
 import com.example.food_ordering.util.DTOConverter;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.ResourceNotFoundException;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -43,8 +43,6 @@ public class BasketServiceImpl implements BasketService {
     private UserRepository userRepository;
     @Autowired
     private DTOConverter dtoConverter;
-    @Autowired
-    private UserConverter userConverter;
     @Autowired
     private CurrentUserProvider currentUserProvider;
 
@@ -125,23 +123,42 @@ public class BasketServiceImpl implements BasketService {
     }
 
     @Override
-    public BasketDto updateBasket(long userId, long productId, int quantity) {
-        return null;
+    @Transactional
+    @Modifying
+    public BasketDto updateBasket(long productId, int quantity) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("Authentication type: " + authentication.getPrincipal().getClass().getName());
+        System.out.println(authentication.getPrincipal().getClass().getName());
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Basket basket = basketRepository.findByUserId(userDetails.user.getId()).get();
+        BasketItem item = basket.getBasketItems()
+                .stream()
+                .filter(basketItem -> basketItem.getProduct().getId() == productId)
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found in basket."));
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero.");
+        }
+        item.setQuantity(quantity);
+        item.calculateTotalPrice();
+        basket.calculateTotals();
+        basketRepository.save(basket);
+        return dtoConverter.toBasketDto(basket);
     }
 
     @Override
-    public BasketDto findBasketByUserId(long userId) {
-        // Kullanıcının sepetini bul
-        Basket basket = basketRepository.findByUserId(userId).orElse(null);
-        // Eğer sepet yoksa boş bir DTO dön
+    public BasketDto findBasketByUserId() {
+        UserDetailsImpl userDetails = currentUserProvider.getCurrentUserDetails();
+
+        Basket basket = basketRepository.findByUserId(userDetails.user.getId()).orElse(null);
+
         if (basket == null) {
             return new BasketDto(0, new ArrayList<>(), 0.0, null);
         }
-        // Sepet boşsa direkt DTO dön
         if (basket.getBasketItems().isEmpty()) {
-            return new BasketDto(basket.getId(), new ArrayList<>(), 0.0, userConverter.toDto(basket.getUser()));
+            return new BasketDto(basket.getId(), new ArrayList<>(), 0.0,
+                    dtoConverter.toDto(basket.getUser()));
         }
-        // Sepet öğelerini DTO'ya dönüştür
         List<BasketItemDto> basketItems =
                 basket.getBasketItems()
                 .stream()

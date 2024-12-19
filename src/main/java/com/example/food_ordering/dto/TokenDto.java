@@ -1,8 +1,5 @@
 package com.example.food_ordering.dto;
 
-import com.example.food_ordering.converter.UserConverter;
-import com.example.food_ordering.service.UserDetailsImpl;
-import com.example.food_ordering.util.DTOConverter;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -24,8 +24,9 @@ public class BasketController {
     private CurrentUserProvider currentUserProvider;
 
     @GetMapping("/basket")
-    public ResponseEntity<?> getUserBasket(@RequestParam("userId") long userId) {
-        BasketDto basketDto = basketService.findBasketByUserId(userId);
+    public ResponseEntity<?> getUserBasket() {
+        // Mevcut kullanıcının sepeti
+        BasketDto basketDto = basketService.findBasketByUserId();
         return ResponseEntity.ok(basketDto);
     }
 
@@ -40,6 +41,13 @@ public class BasketController {
     public ResponseEntity<?> removeProductFromBasket(@RequestParam long productId){
         basketService.removeFromCart(productId);
         return ResponseEntity.ok("Product deleted successfully");
+    }
+
+    @PostMapping("/basket/update")
+    public ResponseEntity<?> updateBasket(@RequestParam long productId,
+                                          @RequestParam int quantity){
+        BasketDto basketDto = basketService.updateBasket(productId,quantity);
+        return ResponseEntity.ok(basketDto);
     }
 
     @DeleteMapping("/basket/clear")

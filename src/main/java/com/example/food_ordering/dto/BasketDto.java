@@ -15,6 +15,7 @@ public class BasketDto {
     private List<BasketItemDto> items = new ArrayList<>();
     private double totalPrice;
     private double discount;
+    private double grandTotal;
     private UserDto user;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

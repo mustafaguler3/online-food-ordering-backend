@@ -19,13 +19,11 @@ public class Basket {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
     @OneToMany(mappedBy = "basket",fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private Set<BasketItem> basketItems = new HashSet<>();
     @OneToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
-
     private double totalPrice; // Tüm öğelerin toplam fiyatı
     private double discount;   // Toplam indirim
     private double tax;        // Vergi miktarı
@@ -34,6 +32,8 @@ public class Basket {
     private String currency;   // Para birimi (ör. USD, EUR)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    @OneToOne(mappedBy = "basket")
+    private Order order;
 
     public Basket() {
     }

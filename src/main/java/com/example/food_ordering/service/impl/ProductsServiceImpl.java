@@ -27,9 +27,8 @@ public class ProductsServiceImpl implements ProductService {
     @Override
     public List<ProductDto> getAllProducts() {
         var products = productRepository.getAllProducts();
-
-        List<ProductDto> productDtos =  products.stream().map(p -> dtoConverter.toProductDto(p)).toList();
-
+        List<ProductDto> productDtos =
+                products.stream().map(p -> dtoConverter.toProductDto(p)).toList();
         return productDtos;
     }
 

@@ -16,15 +16,12 @@ import java.util.List;
 @RequestMapping("/api")
 public class ProductsController {
 
-    private static final Logger log = LoggerFactory.getLogger(ProductsController.class);
     @Autowired
     private ProductService productService;
 
     @GetMapping("/products")
     public ResponseEntity<?> getProducts(){
-
         var products = productService.getAllProducts();
-
         return ResponseEntity.ok(products);
     }
 

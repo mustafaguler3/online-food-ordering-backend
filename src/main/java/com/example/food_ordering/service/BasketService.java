@@ -8,8 +8,8 @@ import java.util.Optional;
 public interface BasketService {
     void addToCart(long productId, int quantity);
     BasketDto removeFromCart(long productId);
-    BasketDto updateBasket(long userId,long productId, int quantity);
-    BasketDto findBasketByUserId(long userId);
+    BasketDto updateBasket(long productId, int quantity);
+    BasketDto findBasketByUserId();
     boolean clearBasket(long userId);
 
 }

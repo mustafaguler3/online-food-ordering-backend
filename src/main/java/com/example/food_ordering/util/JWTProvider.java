@@ -15,7 +15,7 @@ public class JWTProvider {
 
     @Value("${jwt_token}")
     private String secret;
-    private final long ACCESS_TOKEN_EXPIRATION = 60 * 60 * 1000; // 15 minutes
+    private final long ACCESS_TOKEN_EXPIRATION = 120 * 60 * 1000; // 15 minutes
     private final long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
     public String generateToken(UserDetailsImpl userDetails){

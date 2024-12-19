@@ -1,6 +1,5 @@
 package com.example.food_ordering.service.impl;
 
-import com.example.food_ordering.converter.UserConverter;
 import com.example.food_ordering.dto.TokenDto;
 import com.example.food_ordering.dto.UserDto;
 import com.example.food_ordering.entities.Role;
@@ -13,6 +12,7 @@ import com.example.food_ordering.service.AuthService;
 import com.example.food_ordering.service.EmailService;
 import com.example.food_ordering.service.FileStorageService;
 import com.example.food_ordering.service.UserDetailsImpl;
+import com.example.food_ordering.util.DTOConverter;
 import com.example.food_ordering.util.JWTProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -41,11 +41,11 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private RoleRepository roleRepository;
     @Autowired
-    private UserConverter userConverter;
-    @Autowired
     private JWTProvider jwtProvider;
     @Autowired
     private AuthenticationManager authenticationManager;
+    @Autowired
+    private DTOConverter dtoConverter;
     @Autowired
     private EmailService emailService;
     @Autowired
@@ -134,7 +134,7 @@ public class AuthServiceImpl implements AuthService {
             return null;
         }
 
-        return userConverter.toDto(user.get());
+        return dtoConverter.toDto(user.get());
     }
 
     @Override

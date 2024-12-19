@@ -13,6 +13,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -49,7 +50,7 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserDto userDto){
+    public ResponseEntity<?> login(@Valid @RequestBody UserDto userDto){
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(userDto.getEmail(), userDto.getPassword()));
@@ -66,13 +67,6 @@ public class AuthController {
         String refreshToken = jwtProvider.generateRefreshToken(userDetails);
 
         return ResponseEntity.ok(new TokenDto(jwt, refreshToken));
-    }
-
-    @GetMapping("/user")
-    public ResponseEntity<UserDto> getUserInfo(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        UserDto userDto = userDetails.getUserDto();
-
-        return ResponseEntity.ok(userDto);
     }
 
 

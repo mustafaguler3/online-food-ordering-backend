@@ -2,6 +2,9 @@ package com.example.food_ordering.dto;
 
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,6 +20,7 @@ public class UserDto {
     private String firstName;
     private String lastName;
     private boolean isEnabled;
+    private List<AddressDto> addresses = new ArrayList<AddressDto>();
 
     public UserDto(long id, String username, String email, String password, String phoneNumber, String profileImage, String firstName, String lastName) {
         this.id = id;
