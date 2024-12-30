@@ -19,7 +19,7 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
     private String paymentReferenceNumber;
@@ -29,4 +29,14 @@ public class Payment {
     private String paymentMethod; // CREDIT_CARD, PAYPAL, BANK_TRANSFER
     @Temporal(TemporalType.TIMESTAMP)
     private Date paymentDate;
+    // Kredi kartı
+    private String cardNumber;
+    private String cardHolderName;
+    private String expiryDate;
+    private String cvv;
+    // Banka transferi
+    private String bankName;
+    private String accountNumber;
+    // PayPal
+    private String paypalEmail;
 }

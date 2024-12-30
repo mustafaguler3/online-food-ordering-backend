@@ -51,8 +51,8 @@ public class BasketController {
     }
 
     @DeleteMapping("/basket/clear")
-    public ResponseEntity<?> clearBasket(@RequestParam long userId){
-        basketService.clearBasket(userId);
+    public ResponseEntity<?> clearBasket(){
+        basketService.clearBasket();
         return ResponseEntity.ok("Basket cleared successfully");
     }
 

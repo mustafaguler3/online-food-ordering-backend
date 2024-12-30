@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -17,10 +18,10 @@ public class OrderDto {
     private Double totalAmount;
     private OrderStatus status;
     private Date orderDate;
-    private List<OrderItem> items;
+    private List<OrderItemDto> items;
     private long userId;
-    private Payment payment;
+    private PaymentDto payment;
     private long basketId;
-    private Address shippingAddress;
-    private Address billingAddress;
+    private long addressId;
+    private AddressDto shippingAddress;
 }

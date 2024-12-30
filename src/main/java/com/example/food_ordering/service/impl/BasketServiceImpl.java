@@ -10,6 +10,7 @@ import com.example.food_ordering.exceptions.BasketEmptyException;
 import com.example.food_ordering.exceptions.BasketNotFoundException;
 import com.example.food_ordering.exceptions.ProductNotFoundException;
 import com.example.food_ordering.exceptions.UserNotFoundException;
+import com.example.food_ordering.repository.BasketItemRepository;
 import com.example.food_ordering.repository.BasketRepository;
 import com.example.food_ordering.repository.ProductRepository;
 import com.example.food_ordering.repository.UserRepository;
@@ -43,6 +44,8 @@ public class BasketServiceImpl implements BasketService {
     private UserRepository userRepository;
     @Autowired
     private DTOConverter dtoConverter;
+    @Autowired
+    private BasketItemRepository basketItemRepository;
     @Autowired
     private CurrentUserProvider currentUserProvider;
 
@@ -166,31 +169,32 @@ public class BasketServiceImpl implements BasketService {
                 )
                 .collect(Collectors.toList());
 
-        // Toplam fiyatı hesapla
         double totalPrice =
                 basketItems.stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                .mapToDouble(item -> (item.getUnitPrice() * item.getQuantity()) - item.getDiscount())
                 .sum();
 
         BasketDto basketDto = dtoConverter.toBasketDto(basket);
         basketDto.setItems(basketItems);
         basketDto.setTotalPrice(totalPrice);
+
         return basketDto;
     }
 
     @Override
-    public boolean clearBasket(long userId) {
+    @Transactional
+    public boolean clearBasket() {
         UserDetailsImpl userDetails = currentUserProvider.getCurrentUserDetails();
+        Basket basket = basketRepository.findByUserId(userDetails.user.getId()).get();
 
-        Basket basket = basketRepository.findByUserId(userDetails.user.getId())
-                .orElseThrow(() -> new BasketNotFoundException("Your basket is empty"));
-
-        if (basket.getBasketItems().isEmpty()){
-            return false;
+        List<BasketItem> basketItems = basket.getBasketItems();
+        if (basketItems != null && !basketItems.isEmpty()) {
+            basketItemRepository.deleteAll(basketItems);
         }
-        basket.getBasketItems().clear();
-        basket.calculateTotals();
-        basketRepository.delete(basket);
+
+        basket.setBasketItems(new ArrayList<>());
+        basketRepository.save(basket);
+
         return true;
     }
 

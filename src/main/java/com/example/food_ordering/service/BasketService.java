@@ -10,6 +10,6 @@ public interface BasketService {
     BasketDto removeFromCart(long productId);
     BasketDto updateBasket(long productId, int quantity);
     BasketDto findBasketByUserId();
-    boolean clearBasket(long userId);
+    boolean clearBasket();
 
 }

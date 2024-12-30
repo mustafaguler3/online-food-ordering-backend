@@ -24,13 +24,13 @@ public class Order {
     private OrderStatus status;
     @Temporal(TemporalType.TIMESTAMP)
     private Date orderDate;
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private List<OrderItem> items = new ArrayList<>();
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    private List<OrderItem> items;
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    @OneToOne(mappedBy = "order",cascade = CascadeType.ALL)
-    private Payment payment;
+    @OneToMany(mappedBy = "order",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    private List<Payment> payments;
     @OneToOne
     @JoinColumn(name = "basket_id")
     private Basket basket;
@@ -41,16 +41,4 @@ public class Order {
     @JoinColumn(name = "billing_address_id")
     private Address billingAddress;
 
-    // Kredi kartı
-    private String cardNumber;
-    private String cardHolderName;
-    private String expiryDate;
-    private String cvv;
-
-    // Banka transferi
-    private String bankName;
-    private String accountNumber;
-
-    // PayPal
-    private String paypalEmail;
 }

@@ -16,6 +16,7 @@ public class BasketDto {
     private double totalPrice;
     private double discount;
     private double grandTotal;
+    private double tax;
     private UserDto user;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

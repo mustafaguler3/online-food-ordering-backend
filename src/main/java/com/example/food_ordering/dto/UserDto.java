@@ -21,6 +21,7 @@ public class UserDto {
     private String lastName;
     private boolean isEnabled;
     private List<AddressDto> addresses = new ArrayList<AddressDto>();
+    private List<SavedCardDto> cards = new ArrayList<SavedCardDto>();
 
     public UserDto(long id, String username, String email, String password, String phoneNumber, String profileImage, String firstName, String lastName) {
         this.id = id;

@@ -2,20 +2,15 @@ package com.example.food_ordering.util;
 
 import com.example.food_ordering.dto.*;
 import com.example.food_ordering.entities.*;
-import com.example.food_ordering.repository.BasketRepository;
-import com.example.food_ordering.repository.ProductRepository;
-import com.example.food_ordering.repository.RestaurantRepository;
-import com.example.food_ordering.repository.UserRepository;
+import com.example.food_ordering.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
 public class DTOConverter {
-
     @Autowired
     private RestaurantRepository restaurantRepository;
     @Autowired
@@ -23,8 +18,9 @@ public class DTOConverter {
     @Autowired
     private BasketRepository basketRepository;
     @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
     private UserRepository userRepository;
-
 
     public Product toProduct(ProductDto productDto) {
         Product product = new Product();
@@ -36,7 +32,6 @@ public class DTOConverter {
 
         return product;
     }
-
 
     public ProductDto toProductDto(Product product) {
         ProductDto productDto = new ProductDto();
@@ -96,7 +91,7 @@ public class DTOConverter {
         basket.setTotalPrice(basketDto.getTotalPrice());
         basket.setUser(toEntity(basketDto.getUser()));
         basket.setBasketItems(basketDto.getItems().stream().map(this::toBasketItemEntity)
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toList()));
 
         return basket;
     }
@@ -116,6 +111,7 @@ public class DTOConverter {
         basketDto.setUpdatedAt(basket.getUpdatedAt());
         basketDto.setDiscount(basket.getDiscount());
         basketDto.setStatus("Active");
+        basketDto.setTax(basket.getTax());
 
         return basketDto;
     }
@@ -147,12 +143,12 @@ public class DTOConverter {
             );
         }
 
-        basketItemDto.setPrice(basketItem.getUnitPrice());
+        basketItemDto.setDescription(basketItem.getProduct().getDescription());
+        basketItemDto.setUnitPrice(basketItem.getUnitPrice());
         basketItemDto.setQuantity(basketItem.getQuantity());
         if(basketItem.getBasket() != null){
             basketItemDto.setBasketId(basketItem.getBasket().getId());
         }
-
         basketItemDto.setDiscount(basketItem.getDiscount());
         basketItemDto.setTotalPrice(basketItem.getTotalPrice());
         return basketItemDto;
@@ -160,6 +156,7 @@ public class DTOConverter {
 
     public AddressDto addressDto(Address address) {
         AddressDto addressDto = new AddressDto();
+        addressDto.setId(address.getId());
         addressDto.setAddressLine1(address.getAddressLine1());
         addressDto.setAddressLine2(address.getAddressLine2());
         addressDto.setCity(address.getCity());
@@ -177,6 +174,7 @@ public class DTOConverter {
     }
     public Address address(AddressDto addressDto) {
         Address address = new Address();
+        address.setId(addressDto.getId());
         address.setAddressLine1(addressDto.getAddressLine1());
         address.setAddressLine2(addressDto.getAddressLine2());
         address.setCity(addressDto.getCity());
@@ -230,9 +228,87 @@ public class DTOConverter {
                         .map(addressDto -> addressDto(addressDto))
                         .toList();
 
+        List<SavedCardDto> savedCardDtoList =
+                user.getCards()
+                                .stream()
+                                        .map(card -> toSavedCardDto(card))
+                                                .toList();
+
+        userDto.setCards(savedCardDtoList);
         userDto.setAddresses(addressDtoList);
 
         return userDto;
+    }
+
+
+    public OrderItemDto toOrderItemDto(OrderItem orderItem) {
+        OrderItemDto orderItemDto = new OrderItemDto();
+        orderItemDto.setOrderId(orderItem.getOrder().getId());
+        orderItemDto.setProductId(orderItem.getProduct().getId());
+        orderItemDto.setUnitPrice(orderItem.getUnitPrice());
+        orderItemDto.setQuantity(orderItem.getQuantity());
+        orderItemDto.setTotalPrice(orderItem.getTotalPrice());
+
+        return orderItemDto;
+    }
+
+    public OrderItem toOrderItemEntity(OrderItemDto orderItemDto) {
+        OrderItem orderItem = new OrderItem();
+        Order order = orderRepository.getById(orderItemDto.getOrderId());
+        orderItem.setOrder(order);
+        Product product = productRepository.findById(orderItemDto.getProductId()).get();
+        orderItem.setProduct(product);
+        orderItem.setUnitPrice(orderItemDto.getUnitPrice());
+        orderItem.setQuantity(orderItemDto.getQuantity());
+        orderItem.setTotalPrice(orderItemDto.getTotalPrice());
+
+        return orderItem;
+    }
+    public List<OrderItemDto> toOrderItemDtoList(List<OrderItem> orderItems) {
+        return orderItems.stream()
+                .map(this::toOrderItemDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<OrderItem> toOrderItemEntityList(List<OrderItemDto> orderItemDtos) {
+        return orderItemDtos.stream()
+                .map(this::toOrderItemEntity)
+                .collect(Collectors.toList());
+    }
+
+    public SavedCard toSavedCard(SavedCardDto savedCardDto) {
+        SavedCard savedCard = new SavedCard();
+        savedCard.setId(savedCardDto.getId());
+        savedCard.setMaskedCardNumber(savedCardDto.getCardNumber());
+        savedCard.setExpiryDate(savedCardDto.getExpiryDate());
+        savedCard.setCvv(savedCardDto.getCvv());
+        savedCard.setCardHolderName(savedCardDto.getCardHolderName());
+        Optional<User> user = userRepository.findById(savedCardDto.getUserId());
+
+        savedCard.setUser(user.get());
+        return savedCard;
+    }
+
+    public SavedCardDto toSavedCardDto(SavedCard savedCard) {
+        SavedCardDto savedCardDto = new SavedCardDto();
+        savedCardDto.setId(savedCard.getId());
+        savedCardDto.setCardHolderName(savedCard.getCardHolderName());
+        savedCardDto.setCardNumber(savedCard.getMaskedCardNumber());
+        savedCardDto.setExpiryDate(savedCard.getExpiryDate());
+        savedCardDto.setCvv(savedCard.getCvv());
+        savedCardDto.setUserId(savedCard.getUser().getId());
+        return savedCardDto;
+    }
+    public List<SavedCardDto> toSavedCardDtoList(List<SavedCard> savedCardDtoList) {
+        return savedCardDtoList.stream()
+               .map(this::toSavedCardDto)
+               .collect(Collectors.toList());
+    }
+
+    public List<SavedCard> toSavedCardEntityList(List<SavedCardDto> savedCardDtoList) {
+        return savedCardDtoList.stream()
+               .map(this::toSavedCard)
+               .collect(Collectors.toList());
     }
 }
 

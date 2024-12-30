@@ -2,6 +2,7 @@ package com.example.food_ordering.exceptions;
 
 import com.example.food_ordering.dto.ErrorDto;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -30,7 +31,21 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.badRequest().body(errors);
     }
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<?> handleDataIntegrityViolationException(DataIntegrityViolationException ex, WebRequest request) {
+        ErrorDto errorDto = new ErrorDto();
+        errorDto.setTimestamp(new Timestamp(System.currentTimeMillis() *10 *60).toLocalDateTime());
+        errorDto.setPath(request.getDescription(false));
+        errorDto.setMessage(ex.getMessage());
+        errorDto.setTrace(ex.getStackTrace().toString());
 
+        if (ex.getStackTrace().length > 0){
+            StackTraceElement element = ex.getStackTrace()[0];
+            log.error("Exception occurred in class: {}, method: {}, line: {}",
+                    element.getClassName(), element.getMethodName(), element.getLineNumber());
+        }
+        return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
+    }
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<?> handleUsernameNotFoundException(UsernameNotFoundException ex, WebRequest request) {
         ErrorDto errorDto = new ErrorDto();

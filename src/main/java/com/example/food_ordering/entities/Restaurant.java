@@ -18,12 +18,11 @@ public class Restaurant {
     private String name;
     private double rating;
     private String location;
-    private double distance; // in km
-    private int deliveryTime; // in minutes
+    private double distance;
+    private int deliveryTime;
     private boolean bestSeller;
     private String discountDescription;
     private double discountPercent;
-    private double price;
     private String restaurantIcon;
     @OneToMany(mappedBy = "restaurant",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     private List<Product> products = new ArrayList<>();
