@@ -8,16 +8,20 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
 public class PaymentDto {
-    private OrderDto order;
+    private Long id;
+    private Long orderId;
     private String paymentReferenceNumber;
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
     private Double amountPaid;
+    private String currency;
     private String paymentMethod;
+    private Long userId;
     @Temporal(TemporalType.TIMESTAMP)
     private Date paymentDate;
     private String cardNumber;

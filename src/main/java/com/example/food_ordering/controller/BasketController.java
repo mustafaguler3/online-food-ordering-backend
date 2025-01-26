@@ -25,9 +25,18 @@ public class BasketController {
 
     @GetMapping("/basket")
     public ResponseEntity<?> getUserBasket() {
-        // Mevcut kullanıcının sepeti
         BasketDto basketDto = basketService.findBasketByUserId();
         return ResponseEntity.ok(basketDto);
+    }
+
+    @PostMapping("/basket/applyCode")
+    public ResponseEntity<BasketDto> applyDiscount(@RequestParam String discountCode) {
+        try {
+            BasketDto updatedBasket = basketService.applyDiscountCodeToBasket(discountCode);
+            return ResponseEntity.ok(updatedBasket);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     @PostMapping("/basket/add")
@@ -44,7 +53,7 @@ public class BasketController {
     }
 
     @PostMapping("/basket/update")
-    public ResponseEntity<?> updateBasket(@RequestParam long productId,
+    public ResponseEntity<?> updateBasket(@RequestParam int productId,
                                           @RequestParam int quantity){
         BasketDto basketDto = basketService.updateBasket(productId,quantity);
         return ResponseEntity.ok(basketDto);

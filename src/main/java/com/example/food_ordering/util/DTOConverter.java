@@ -2,8 +2,12 @@ package com.example.food_ordering.util;
 
 import com.example.food_ordering.dto.*;
 import com.example.food_ordering.entities.*;
+import com.example.food_ordering.enums.OrderStatus;
+import com.example.food_ordering.enums.PaymentStatus;
 import com.example.food_ordering.repository.*;
+import com.example.food_ordering.service.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.ResourceNotFoundException;
 import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +23,8 @@ public class DTOConverter {
     private BasketRepository basketRepository;
     @Autowired
     private OrderRepository orderRepository;
+    @Autowired
+    private CurrentUserProvider currentUserProvider;
     @Autowired
     private UserRepository userRepository;
 
@@ -116,16 +122,24 @@ public class DTOConverter {
         return basketDto;
     }
 
-    public BasketItem toBasketItemEntity(BasketItemDto basketItemDto){
+    public BasketItem toBasketItemEntity(BasketItemDto basketItemDto) {
+        // Retrieve the Product using the productId from the DTO
+        Product product = productRepository.findById((long) basketItemDto.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found."));
+
+        // Retrieve the Basket using the basketId from the DTO
+        Basket basket = basketRepository.findById(basketItemDto.getBasketId())
+                .orElseThrow(() -> new ResourceNotFoundException("Basket not found."));
+
+        // Create the BasketItem entity
         BasketItem basketItem = new BasketItem();
         basketItem.setId(basketItemDto.getId());
-        Optional<Product> product = productRepository.findById(basketItemDto.getProductId());
-        basketItem.setProduct(product.get());
+        basketItem.setProduct(product);
+        basketItem.setUnitPrice(basketItemDto.getUnitPrice());
         basketItem.setQuantity(basketItemDto.getQuantity());
-
-        Basket basket = basketRepository.findById(basketItemDto.getBasketId()).get();
+        basketItem.setDiscount(basketItemDto.getDiscount());
+        basketItem.setTotalPrice(basketItemDto.getTotalPrice());
         basketItem.setBasket(basket);
-
 
         return basketItem;
     }
@@ -135,7 +149,7 @@ public class DTOConverter {
         basketItemDto.setId(basketItem.getId());
         if(basketItem.getProduct() != null) {
             ProductDto productDto = toProductDto(basketItem.getProduct());
-            basketItemDto.setProductId((long) basketItem.getProduct().getId());
+            basketItemDto.setProductId(basketItem.getProduct().getId());
             basketItemDto.setProductName(productDto.getName());
             basketItemDto.setProductImage(
                     productDto.getFoodImageUrls() != null && !productDto.getFoodImageUrls().isEmpty()
@@ -154,7 +168,7 @@ public class DTOConverter {
         return basketItemDto;
     }
 
-    public AddressDto addressDto(Address address) {
+    public AddressDto toAddressDto(Address address) {
         AddressDto addressDto = new AddressDto();
         addressDto.setId(address.getId());
         addressDto.setAddressLine1(address.getAddressLine1());
@@ -172,7 +186,7 @@ public class DTOConverter {
 
         return addressDto;
     }
-    public Address address(AddressDto addressDto) {
+    public Address toAddressEntity(AddressDto addressDto) {
         Address address = new Address();
         address.setId(addressDto.getId());
         address.setAddressLine1(addressDto.getAddressLine1());
@@ -204,7 +218,7 @@ public class DTOConverter {
 
         List<Address> addresses = userDto.getAddresses()
                 .stream()
-                .map(addressDto -> address(addressDto))
+                .map(addressDto -> toAddressEntity(addressDto))
                 .toList();
         user.setAddresses(addresses);
 
@@ -225,7 +239,7 @@ public class DTOConverter {
         List<AddressDto> addressDtoList =
                 user.getAddresses()
                         .stream()
-                        .map(addressDto -> addressDto(addressDto))
+                        .map(addressDto -> toAddressDto(addressDto))
                         .toList();
 
         List<SavedCardDto> savedCardDtoList =
@@ -309,6 +323,190 @@ public class DTOConverter {
         return savedCardDtoList.stream()
                .map(this::toSavedCard)
                .collect(Collectors.toList());
+    }
+
+    public Payment toPaymentEntity(PaymentDto paymentDto){
+        Payment payment = new Payment();
+        payment.setId(paymentDto.getId());
+        payment.setAmountPaid(paymentDto.getAmountPaid());
+        payment.setCurrency(paymentDto.getCurrency());
+        payment.setPaymentMethod(paymentDto.getPaymentMethod());
+        payment.setPaymentReferenceNumber(paymentDto.getPaymentReferenceNumber());
+        User user = userRepository.findById(paymentDto.getUserId()).get();
+        payment.setUser(user);
+
+        payment.setPaymentDate(paymentDto.getPaymentDate());
+        payment.setOrder(orderRepository.findById(paymentDto.getId()).get());
+        payment.setCardNumber(paymentDto.getCardNumber());
+        payment.setExpiryDate(paymentDto.getExpirationDate());
+        payment.setCvv(paymentDto.getCvv());
+        payment.setCardHolderName(paymentDto.getCardHolderName());
+        payment.setStatus(paymentDto.getStatus());
+
+        return payment;
+    }
+    public OrderDto mapToOrderDto(Order order) {
+        if (order == null) {
+            return null;
+        }
+
+        OrderDto orderDto = new OrderDto();
+        orderDto.setId(order.getId());
+        orderDto.setOrderReferenceNumber(order.getOrderReferenceNumber());
+        orderDto.setTotalAmount(order.getTotalAmount());
+        orderDto.setStatus(order.getStatus() != null ? OrderStatus.valueOf(order.getStatus().name()) : null);
+        orderDto.setOrderDate(order.getOrderDate());
+
+        // OrderItem'ları dönüştür
+        if (order.getItems() != null) {
+            orderDto.setItems(
+                    order.getItems()
+                            .stream()
+                            .map(this::toOrderItemDto)
+                            .collect(Collectors.toList())
+            );
+        }
+
+        // Kullanıcı bilgisi
+        if (order.getUser() != null) {
+            orderDto.setUserId(order.getUser().getId());
+        }
+
+        // Payment dönüştürme
+        if (order.getPayment() != null) {
+            orderDto.setPayment(mapToPaymentDto(order.getPayment()));
+        }
+
+
+
+        // Basket bilgisi
+        if (order.getBasket() != null) {
+            orderDto.setBasketId(Long.valueOf(order.getBasket().getId()));
+        }
+
+        // Shipping Address
+        if (order.getShippingAddress() != null) {
+            orderDto.setAddressId(order.getShippingAddress().getId());
+            orderDto.setShippingAddress(toAddressDto(order.getShippingAddress()));
+        }
+
+
+
+        return orderDto;
+    }
+    public Order mapToOrderEntity(OrderDto orderDto) {
+        if (orderDto == null) {
+            return null;
+        }
+        Order order = new Order();
+        order.setId(orderDto.getId());
+        order.setOrderReferenceNumber(orderDto.getOrderReferenceNumber());
+        order.setTotalAmount(orderDto.getTotalAmount());
+        order.setStatus(orderDto.getStatus() != null ?
+                OrderStatus.valueOf(String.valueOf(orderDto.getStatus())) : null);
+        order.setOrderDate(orderDto.getOrderDate());
+
+        if (orderDto.getItems() != null) {
+            order.setItems(
+                    orderDto.getItems()
+                            .stream()
+                            .map(this::toOrderItemEntity)
+                            .collect(Collectors.toList())
+            );
+
+            for (OrderItem item : order.getItems()) {
+                item.setOrder(order);
+            }
+        }
+
+        if (orderDto.getUserId() != null) {
+            User user = new User();
+            user.setId(orderDto.getUserId());
+            order.setUser(user);
+        }
+
+        if (orderDto.getPayment() != null) {
+            Payment payment = mapToPaymentEntity(orderDto.getPayment());
+            payment.setOrder(order);
+            order.setPayment(payment);
+        }
+
+        if (orderDto.getBasketId() != null) {
+            Basket basket = new Basket();
+            basket.setId(Math.toIntExact(orderDto.getBasketId()));
+            order.setBasket(basket);
+        }
+
+        // Shipping Address
+        if (orderDto.getShippingAddress() != null) {
+            order.setShippingAddress(toAddressEntity(orderDto.getShippingAddress()));
+        }
+
+
+        return order;
+    }
+
+    public static PaymentDto mapToPaymentDto(Payment payment) {
+        if (payment == null) {
+            return null;
+        }
+
+        PaymentDto dto = new PaymentDto();
+        dto.setId(payment.getId());
+        dto.setOrderId(payment.getOrder() != null ? payment.getOrder().getId() : null);
+        dto.setCurrency(payment.getCurrency());
+        dto.setUserId(payment.getUser() != null ? payment.getUser().getId() : null);
+        dto.setPaymentReferenceNumber(payment.getPaymentReferenceNumber());
+        dto.setStatus(payment.getStatus() != null ? PaymentStatus.valueOf(payment.getStatus().name()) : null);
+        dto.setAmountPaid(payment.getAmountPaid());
+        dto.setPaymentMethod(payment.getPaymentMethod());
+        dto.setPaymentDate(payment.getPaymentDate());
+
+        // Kredi kartı bilgileri
+        dto.setCardNumber(payment.getCardNumber());
+        dto.setCardHolderName(payment.getCardHolderName());
+        dto.setExpirationDate(payment.getExpiryDate());
+        dto.setCvv(payment.getCvv());
+
+        return dto;
+    }
+    public static Payment mapToPaymentEntity(PaymentDto dto) {
+        if (dto == null) {
+            return null;
+        }
+
+        Payment payment = new Payment();
+        payment.setId(dto.getId());
+
+        // Order
+        if (dto.getOrderId() != null) {
+            Order order = new Order();
+            order.setId(dto.getOrderId());
+            payment.setOrder(order);
+        }
+
+        payment.setCurrency(dto.getCurrency());
+
+        // User
+        if (dto.getUserId() != null) {
+            User user = new User();
+            user.setId(dto.getUserId());
+            payment.setUser(user);
+        }
+
+        payment.setPaymentReferenceNumber(dto.getPaymentReferenceNumber());
+        payment.setStatus(dto.getStatus() != null ? PaymentStatus.valueOf(String.valueOf(dto.getStatus())) : null);
+        payment.setAmountPaid(dto.getAmountPaid());
+        payment.setPaymentMethod(dto.getPaymentMethod());
+        payment.setPaymentDate(dto.getPaymentDate());
+
+        // Kredi kartı bilgileri
+        payment.setCardNumber(dto.getCardNumber());
+        payment.setCardHolderName(dto.getCardHolderName());
+        payment.setExpiryDate(dto.getExpirationDate());
+        payment.setCvv(dto.getCvv());
+
+        return payment;
     }
 }
 

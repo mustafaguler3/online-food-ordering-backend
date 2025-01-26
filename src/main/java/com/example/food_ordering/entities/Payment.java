@@ -19,14 +19,23 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "order_id")
     private Order order;
+    private String currency;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
     private String paymentReferenceNumber;
+
+    @ManyToOne
+    @JoinColumn(name = "saved_card_id")
+    private SavedCard savedCard;
+
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
     private Double amountPaid;
-    private String paymentMethod; // CREDIT_CARD, PAYPAL, BANK_TRANSFER
+    private String paymentMethod;
     @Temporal(TemporalType.TIMESTAMP)
     private Date paymentDate;
     // Kredi kartı

@@ -19,9 +19,10 @@ public class OrderDto {
     private OrderStatus status;
     private Date orderDate;
     private List<OrderItemDto> items;
-    private long userId;
+    private Long userId;
+    private Long paymentId;
     private PaymentDto payment;
-    private long basketId;
-    private long addressId;
+    private Long basketId;
+    private Long addressId;
     private AddressDto shippingAddress;
 }

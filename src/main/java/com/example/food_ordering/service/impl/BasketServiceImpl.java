@@ -2,10 +2,8 @@ package com.example.food_ordering.service.impl;
 
 import com.example.food_ordering.dto.BasketDto;
 import com.example.food_ordering.dto.BasketItemDto;
-import com.example.food_ordering.entities.Basket;
-import com.example.food_ordering.entities.BasketItem;
-import com.example.food_ordering.entities.Product;
-import com.example.food_ordering.entities.User;
+import com.example.food_ordering.entities.*;
+import com.example.food_ordering.enums.DiscountType;
 import com.example.food_ordering.exceptions.BasketEmptyException;
 import com.example.food_ordering.exceptions.BasketNotFoundException;
 import com.example.food_ordering.exceptions.ProductNotFoundException;
@@ -15,6 +13,7 @@ import com.example.food_ordering.repository.BasketRepository;
 import com.example.food_ordering.repository.ProductRepository;
 import com.example.food_ordering.repository.UserRepository;
 import com.example.food_ordering.service.BasketService;
+import com.example.food_ordering.service.DiscountCodeService;
 import com.example.food_ordering.service.UserDetailsImpl;
 import com.example.food_ordering.util.CurrentUserProvider;
 import com.example.food_ordering.util.DTOConverter;
@@ -29,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -40,6 +40,8 @@ public class BasketServiceImpl implements BasketService {
     private BasketRepository basketRepository;
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private DiscountCodeService discountCodeService;
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -79,7 +81,7 @@ public class BasketServiceImpl implements BasketService {
         BasketItem existingCart =
                 basket.getBasketItems()
                 .stream()
-                .filter(item -> item.getProduct().getId()== product.getId())
+                .filter(item -> item.getProduct().getId() == product.getId())
                 .findFirst().orElse(null);
 
         if (existingCart != null){
@@ -94,7 +96,6 @@ public class BasketServiceImpl implements BasketService {
             basketItem.setUnitPrice(product.getPrice());
             basketItem.calculateDiscountPercentage();
             basketItem.calculateTotalPrice();
-
             basket.getBasketItems().add(basketItem);
         }
 
@@ -128,24 +129,34 @@ public class BasketServiceImpl implements BasketService {
     @Override
     @Transactional
     @Modifying
-    public BasketDto updateBasket(long productId, int quantity) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println("Authentication type: " + authentication.getPrincipal().getClass().getName());
-        System.out.println(authentication.getPrincipal().getClass().getName());
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        Basket basket = basketRepository.findByUserId(userDetails.user.getId()).get();
-        BasketItem item = basket.getBasketItems()
+    public BasketDto updateBasket(int productId, int quantity) {
+        UserDetailsImpl userDetails = currentUserProvider.getCurrentUserDetails();
+
+        if (userDetails == null || userDetails.user == null) {
+            throw new RuntimeException("User is not authenticated");
+        }
+
+        Basket basket = basketRepository.findByUserId(userDetails.user.getId())
+                .orElse(null);
+
+        BasketItem item =
+                basket.getBasketItems()
                 .stream()
                 .filter(basketItem -> basketItem.getProduct().getId() == productId)
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found in basket."));
+                        .orElse(null);
+
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity must be greater than zero.");
         }
-        item.setQuantity(quantity);
-        item.calculateTotalPrice();
-        basket.calculateTotals();
-        basketRepository.save(basket);
+
+        if (item != null){
+            item.setQuantity(quantity);
+            item.calculateTotalPrice();
+            basket.calculateTotals();
+            basketRepository.save(basket);
+        }
+
         return dtoConverter.toBasketDto(basket);
     }
 
@@ -153,7 +164,12 @@ public class BasketServiceImpl implements BasketService {
     public BasketDto findBasketByUserId() {
         UserDetailsImpl userDetails = currentUserProvider.getCurrentUserDetails();
 
-        Basket basket = basketRepository.findByUserId(userDetails.user.getId()).orElse(null);
+        if (userDetails == null || userDetails.user == null) {
+            throw new RuntimeException("User is not authenticated");
+        }
+
+        Basket basket = basketRepository.findByUserId(userDetails.user.getId())
+                .orElse(null);
 
         if (basket == null) {
             return new BasketDto(0, new ArrayList<>(), 0.0, null);
@@ -198,8 +214,58 @@ public class BasketServiceImpl implements BasketService {
         return true;
     }
 
+    @Override
+    public BasketDto applyDiscountCodeToBasket(String discountCode) {
+        UserDetailsImpl userDetails = currentUserProvider.getCurrentUserDetails();
+        if (userDetails == null || userDetails.user == null) {
+            throw new RuntimeException("User is not authenticated");
+        }
+        Basket basket = basketRepository.findByUserId(userDetails.user.getId()).orElse(null);
+        DiscountCode code = discountCodeService.getDiscountCodeByCode(discountCode);
+        if (code != null && code.isValid()){
+            basket.setDiscountCode(code);
+            basket.setDiscount(code.getDiscountValue());
+            basket.calculateTotals();
+        }else {
+            throw new RuntimeException("Invalid or expired discount code");
+        }
+        basketRepository.save(basket);
+        return dtoConverter.toBasketDto(basket);
+    }
+
+    private double calculateDiscount(double totalPrice,DiscountCode code){
+        if (code.getType() == DiscountType.PERCENTAGE){
+            return totalPrice * (code.getDiscountValue() / 100);
+        }else {
+            return code.getDiscountValue();
+        }
+    }
+
     public String generateRandomBasketId() {
         int randomId = ThreadLocalRandom.current().nextInt(100000, 999999);
         return "BASKET-" + randomId;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

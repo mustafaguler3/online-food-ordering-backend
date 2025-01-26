@@ -29,8 +29,8 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    @OneToMany(mappedBy = "order",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
-    private List<Payment> payments;
+    @OneToOne(mappedBy = "order",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    private Payment payment;
     @OneToOne
     @JoinColumn(name = "basket_id")
     private Basket basket;

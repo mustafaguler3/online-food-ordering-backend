@@ -1,7 +1,10 @@
 package com.example.food_ordering.util;
 
+import com.example.food_ordering.entities.DiscountCode;
 import com.example.food_ordering.entities.Product;
 import com.example.food_ordering.entities.Restaurant;
+import com.example.food_ordering.enums.DiscountType;
+import com.example.food_ordering.repository.DiscountCodeRepository;
 import com.example.food_ordering.repository.ProductRepository;
 import com.example.food_ordering.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
@@ -9,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,16 +21,36 @@ public class DataSeed implements CommandLineRunner {
 
     private final RestaurantRepository restaurantRepository;
     private final ProductRepository productRepository;
+    private final DiscountCodeRepository discountCodeRepository;
 
-    public DataSeed(RestaurantRepository restaurantRepository, ProductRepository productRepository) {
+    public DataSeed(RestaurantRepository restaurantRepository, ProductRepository productRepository, DiscountCodeRepository discountCodeRepository) {
         this.restaurantRepository = restaurantRepository;
         this.productRepository = productRepository;
+        this.discountCodeRepository = discountCodeRepository;
     }
 
     @Override
     @Transactional
     public void run(String... args) throws Exception {
         seedData();
+
+        DiscountCode discountCode1 = new DiscountCode();
+        discountCode1.setCode("SUMMER10");
+        discountCode1.setDiscountValue(10); // %10 indirim
+        discountCode1.setActive(true);
+        discountCode1.setType(DiscountType.PERCENTAGE); // Yüzde indirim
+        discountCode1.setValidFrom(LocalDateTime.now().minusDays(1)); // Geçerlilik başlama zamanı
+        discountCode1.setValidUntil(LocalDateTime.now().plusMonths(1)); // Geçerlilik bitiş zamanı
+        discountCodeRepository.save(discountCode1); // Veritabanına kaydet
+
+        DiscountCode discountCode2 = new DiscountCode();
+        discountCode2.setCode("FLAT50");
+        discountCode2.setDiscountValue(50); // 50 TL indirim
+        discountCode2.setActive(true);
+        discountCode2.setType(DiscountType.AMOUNT); // Sabit indirim
+        discountCode2.setValidFrom(LocalDateTime.now().minusDays(1)); // Geçerlilik başlama zamanı
+        discountCode2.setValidUntil(LocalDateTime.now().plusMonths(2)); // Geçerlilik bitiş zamanı
+        discountCodeRepository.save(discountCode2); // Veritabanına kaydet
     }
 
     private void seedData() {

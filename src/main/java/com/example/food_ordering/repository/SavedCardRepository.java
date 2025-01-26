@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface SavedCardRepository extends JpaRepository<SavedCard,Long> {
     List<SavedCard> findSavedCardsByUser(User user);
+    SavedCard findSavedCardByUserId(Long userId);
 }

@@ -1,5 +1,7 @@
 package com.example.food_ordering.dto;
 
+import com.example.food_ordering.entities.BasketItem;
+import com.example.food_ordering.entities.DiscountCode;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +19,7 @@ public class BasketDto {
     private double discount;
     private double grandTotal;
     private double tax;
+    private DiscountCode discountCode;
     private UserDto user;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -34,5 +37,18 @@ public class BasketDto {
         this.status = "active";  // default status
     }
 
+    public void calculateTotals(){
+        applyTaxAndDiscount();
+        this.totalPrice = items.stream().mapToDouble(BasketItemDto::getTotalPrice).sum();
+        this.grandTotal = (this.totalPrice - this.discount) + this.tax;
+    }
 
+    public double calculateBasketDiscountPercentage() {
+        return (this.discount / this.totalPrice) * 100;
+    }
+
+    public void applyTaxAndDiscount() {
+        this.tax = 5.0;
+        this.discount = 10.0;
+    }
 }

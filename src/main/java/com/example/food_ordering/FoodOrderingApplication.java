@@ -15,5 +15,4 @@ public class FoodOrderingApplication {
 		SpringApplication.run(FoodOrderingApplication.class, args);
 	}
 
-
 }

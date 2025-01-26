@@ -49,7 +49,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public void createOrder(OrderDto orderDto) {
+    public OrderDto createOrder(OrderDto orderDto) {
         // 1. Kullanıcının aktif sepetini al
         BasketDto basket = basketService.findBasketByUserId();
         if (basket == null || basket.getItems().isEmpty()) {
@@ -91,7 +91,7 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = orderRepository.save(order);
 
         // 5. Ödeme işlemi
-        boolean payment = paymentService.processPayment(orderDto.getPayment(), savedOrder);
+        boolean payment = paymentService.processPayment(orderDto.getPayment(), dtoConverter.mapToOrderDto(savedOrder));
         // 6. Sipariş durumunu güncelleme
         if (payment) {
             savedOrder.setStatus(OrderStatus.PROCESSING);
@@ -105,6 +105,7 @@ public class OrderServiceImpl implements OrderService {
             throw new PaymentException("Payment failed, order not completed");
         }
 
+        return orderDto;
     }
     private OrderItemDto convertBasketItemToOrderItem(BasketItemDto basketItem, Order order) {
         System.out.println("Converting BasketItem to OrderItem");
@@ -113,7 +114,6 @@ public class OrderServiceImpl implements OrderService {
 
         OrderItemDto orderItem = new OrderItemDto();
         orderItem.setOrderId(basketItem.getBasketId());
-
         orderItem.setProductId(basketItem.getProductId());
         orderItem.setQuantity(basketItem.getQuantity());
         orderItem.setUnitPrice(basketItem.getUnitPrice());
@@ -132,8 +132,6 @@ public class OrderServiceImpl implements OrderService {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         order.setUser(userDetails.user);
         order.setBasket(userDetails.user.getBasket());
-
-
         return order;
     }
 

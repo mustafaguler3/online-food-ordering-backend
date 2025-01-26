@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Getter
@@ -21,6 +22,9 @@ public class SavedCard {
     private String cvv;
     private String maskedCardNumber;
     private String expiryDate;
+
+    @OneToMany(mappedBy = "savedCard",cascade = CascadeType.ALL)
+    private List<Payment> payments;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

@@ -1,8 +1,9 @@
 package com.example.food_ordering.service;
 
+import com.example.food_ordering.dto.OrderDto;
 import com.example.food_ordering.dto.PaymentDto;
 import com.example.food_ordering.entities.Order;
 
 public interface PaymentService {
-    boolean processPayment(PaymentDto paymentDto, Order order);
+    boolean processPayment(PaymentDto paymentDto, OrderDto order);
 }

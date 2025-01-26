@@ -1,12 +1,17 @@
 package com.example.food_ordering.service.impl;
 
+import com.example.food_ordering.dto.OrderDto;
 import com.example.food_ordering.dto.PaymentDto;
 import com.example.food_ordering.entities.Order;
 import com.example.food_ordering.entities.Payment;
+import com.example.food_ordering.entities.SavedCard;
 import com.example.food_ordering.enums.PaymentStatus;
 import com.example.food_ordering.repository.PaymentRepository;
+import com.example.food_ordering.repository.SavedCardRepository;
+import com.example.food_ordering.repository.UserRepository;
 import com.example.food_ordering.service.PaymentService;
 import com.example.food_ordering.util.CreditCardValidator;
+import com.example.food_ordering.util.DTOConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,28 +24,54 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     private PaymentRepository paymentRepository;
+    @Autowired
+    private DTOConverter dtoConverter;
+    @Autowired
+    private SavedCardRepository savedCardRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
-    public boolean processPayment(PaymentDto paymentDto, Order order) {
+    public boolean processPayment(PaymentDto paymentDto, OrderDto orderDto) {
         Payment payment = new Payment();
         payment.setStatus(PaymentStatus.PENDING);
-        payment.setAmountPaid(order.getTotalAmount());
+        payment.setAmountPaid(orderDto.getTotalAmount());
         payment.setPaymentMethod(paymentDto.getPaymentMethod());
         payment.setPaymentDate(new Date());
         payment.setPaymentReferenceNumber(UUID.randomUUID().toString());
 
-        if(Objects.equals(payment.getPaymentMethod(), "Credit Card")) {
+        // Yeni kart ile ödeme kontrolü
+        if ("Credit Card".equals(paymentDto.getPaymentMethod()) && paymentDto.getCardNumber() != null) {
             payment.setCardNumber(paymentDto.getCardNumber());
             payment.setCvv(paymentDto.getCvv());
             payment.setExpiryDate(paymentDto.getExpirationDate());
             payment.setCardHolderName(paymentDto.getCardHolderName());
+            payment.setUser(userRepository.findById(orderDto.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı")));
+        }
+        // Kayıtlı kart ile ödeme kontrolü
+        else if ("Saved Card".equals(paymentDto.getPaymentMethod())) {
+            SavedCard savedCard = savedCardRepository.findSavedCardByUserId(orderDto.getUserId());
+            if (savedCard != null) {
+                payment.setCardNumber(savedCard.getMaskedCardNumber());
+                payment.setCvv(savedCard.getCvv());
+                payment.setExpiryDate(savedCard.getExpiryDate());
+                payment.setCardHolderName(savedCard.getCardHolderName());
+
+                payment.setUser(userRepository.findById(orderDto.getUserId())
+                        .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı")));
+            } else {
+                throw new IllegalArgumentException("Kayıtlı kart bulunamadı.");
+            }
+        } else {
+            throw new IllegalArgumentException("Geçerli bir ödeme yöntemi belirtilmedi.");
         }
 
         boolean paymentSuccessful = processExternalPayment(payment);
 
         if (paymentSuccessful) {
             payment.setStatus(PaymentStatus.COMPLETED);
-            payment.setOrder(order);
+            payment.setOrder(dtoConverter.mapToOrderEntity(orderDto));
             paymentRepository.save(payment);
             return true;
         } else {

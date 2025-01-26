@@ -20,10 +20,15 @@ public class Basket {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @OneToMany(mappedBy = "basket",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
-    private List<BasketItem> basketItems;
+    private List<BasketItem> basketItems = new ArrayList<>();
     @OneToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "discount_code_id")
+    private DiscountCode discountCode;
+
     private double totalPrice; // Tüm öğelerin toplam fiyatı
     private double discount;   // Toplam indirim
     private double tax;        // Vergi miktarı
@@ -50,9 +55,28 @@ public class Basket {
 
     public void applyTaxAndDiscount() {
         this.tax = 5.0;
-        this.discount = 10.0;
+        if (discountCode != null && discountCode.isValid()) {
+            applyDiscountCode();
+        } else {
+            this.discount = 0.0;
+        }
     }
 
+    public void applyDiscountCode() {
+        if (discountCode != null) {
+            this.discount = discountCode.getDiscountValue();
+        }
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
 
 

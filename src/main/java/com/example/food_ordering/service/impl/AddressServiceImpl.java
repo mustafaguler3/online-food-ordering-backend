@@ -51,7 +51,7 @@ public class AddressServiceImpl implements AddressService {
 
         address.setUser(user);
         addressRepository.save(address);
-        return dtoConverter.addressDto(address);
+        return dtoConverter.toAddressDto(address);
     }
 
     @Override
@@ -71,7 +71,7 @@ public class AddressServiceImpl implements AddressService {
 
         List<AddressDto> addressDtos =
                 addresses.stream()
-                        .map(address -> dtoConverter.addressDto(address)).toList();
+                        .map(address -> dtoConverter.toAddressDto(address)).toList();
 
         return addressDtos;
     }

@@ -7,8 +7,8 @@ import lombok.Setter;
 @Setter
 public class BasketItemDto {
 
-    private Integer id;
-    private Long productId;
+    private int id;
+    private int productId;
     private String productName;
     private String productImage;
     private String description;
@@ -18,6 +18,13 @@ public class BasketItemDto {
     private long basketId;
     private double unitPrice;
 
+    public void calculateTotalPrice(){
+        this.totalPrice = (unitPrice * quantity) - discount;
+    }
+
+    public double calculateDiscountPercentage() {
+        return (discount / (unitPrice * quantity)) * 100;
+    }
 }
 
 
