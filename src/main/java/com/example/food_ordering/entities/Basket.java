@@ -37,8 +37,9 @@ public class Basket {
     private String currency;   // Para birimi (ör. USD, EUR)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    @OneToOne(mappedBy = "basket")
-    private Order order;
+
+    @OneToMany(mappedBy = "basket")
+    private List<Order> orders;
 
     public Basket() {
     }

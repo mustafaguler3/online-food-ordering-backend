@@ -55,14 +55,14 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public List<AddressDto> getAddressByUserId(long userId) {
+    public List<AddressDto> getAddressesByUserId(long userId) {
         Optional<User> user = userRepository.findById(userId);
         if (user.isEmpty()){
             throw new UsernameNotFoundException("User not found" + userId);
         }
         List<Address> addresses =
                 addressRepository
-                        .getAddressByUserId(userId)
+                        .getAddressesByUserId(userId)
                         .stream().toList();
 
         if (addresses.isEmpty()){
@@ -75,6 +75,14 @@ public class AddressServiceImpl implements AddressService {
 
         return addressDtos;
     }
+
+    @Override
+    public AddressDto getAddressByUserId(long userId) {
+        Address address = addressRepository.getAddressByUserId(userId);
+        return dtoConverter.toAddressDto(address);
+    }
+
+
 }
 
 

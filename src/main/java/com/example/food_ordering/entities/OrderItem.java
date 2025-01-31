@@ -14,7 +14,7 @@ public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
     @ManyToOne
@@ -24,7 +24,14 @@ public class OrderItem {
     private Double unitPrice;
     private Double totalPrice;
 
-    public double getTotalPrice() {
-        return unitPrice * quantity;
+    private Double discountPercentage;
+    private Double taxRate;
+
+
+    public Double getTotalPrice() {
+        double priceAfterDiscount = unitPrice - (unitPrice * (discountPercentage != null ? discountPercentage : 0) / 100);
+        double priceAfterTax = priceAfterDiscount + (priceAfterDiscount * (taxRate != null ? taxRate : 0) / 100);
+        return priceAfterTax * quantity;
     }
+
 }

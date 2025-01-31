@@ -21,7 +21,8 @@ public class OrderDto {
     private List<OrderItemDto> items;
     private Long userId;
     private Long paymentId;
-    private PaymentDto payment;
+    private Long restaurantId;
+    private List<PaymentDto> payments;
     private Long basketId;
     private Long addressId;
     private AddressDto shippingAddress;

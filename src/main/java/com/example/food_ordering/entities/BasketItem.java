@@ -21,10 +21,10 @@ public class BasketItem {
     @JoinColumn(name = "basket_id")
     private Basket basket;
 
-    private int quantity;      // Ürün miktarı
-    private double unitPrice;  // Ürünün birim fiyatı
-    private double discount;   // Ürün bazında indirim
-    private double totalPrice; // Ürün toplam fiyatı (hesaplanır) // subTotal = unitPrice * quantity
+    private int quantity;
+    private double unitPrice;
+    private double discount;
+    private double totalPrice;
 
     public void calculateTotalPrice(){
         this.totalPrice = (unitPrice * quantity) - discount;

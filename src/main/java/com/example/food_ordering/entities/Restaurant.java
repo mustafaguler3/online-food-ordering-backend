@@ -27,6 +27,8 @@ public class Restaurant {
     @OneToMany(mappedBy = "restaurant",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     private List<Product> products = new ArrayList<>();
 
+    @OneToMany(mappedBy = "restaurant",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    private List<Order> orders;
 
     public Restaurant() {
     }

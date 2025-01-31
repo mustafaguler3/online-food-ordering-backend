@@ -71,7 +71,7 @@ public class UserController {
         long userId = userDetails.user.getId();
 
         try {
-            List<AddressDto> addresses = addressService.getAddressByUserId(userId);
+            List<AddressDto> addresses = addressService.getAddressesByUserId(userId);
             if (addresses.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("No addresses found for the user");

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Getter
@@ -35,6 +36,9 @@ public class Address {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdDate;
 
+
+    @OneToMany(mappedBy = "shippingAddress")
+    private List<Order> orders;
 
 
 

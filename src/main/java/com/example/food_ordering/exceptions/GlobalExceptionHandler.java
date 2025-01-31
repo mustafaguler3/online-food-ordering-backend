@@ -3,6 +3,7 @@ package com.example.food_ordering.exceptions;
 import com.example.food_ordering.dto.ErrorDto;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -23,6 +24,7 @@ import java.util.Map;
 @Log4j2
 public class GlobalExceptionHandler {
 
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -30,6 +32,23 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage());
         }
         return ResponseEntity.badRequest().body(errors);
+    }
+
+
+    @ExceptionHandler(InvalidDataAccessApiUsageException.class)
+    public ResponseEntity<?> handleInvalidDataAccessApiUsageException(InvalidDataAccessApiUsageException ex, WebRequest request) {
+        ErrorDto errorDto = new ErrorDto();
+        errorDto.setTimestamp(new Timestamp(System.currentTimeMillis() *10 *60).toLocalDateTime());
+        errorDto.setPath(request.getDescription(false));
+        errorDto.setMessage(ex.getMessage());
+        errorDto.setTrace(ex.getStackTrace().toString());
+
+        if (ex.getStackTrace().length > 0){
+            StackTraceElement element = ex.getStackTrace()[0];
+            log.error("Exception occurred in class: {}, method: {}, line: {}",
+                    element.getClassName(), element.getMethodName(), element.getLineNumber());
+        }
+        return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
     }
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<?> handleDataIntegrityViolationException(DataIntegrityViolationException ex, WebRequest request) {

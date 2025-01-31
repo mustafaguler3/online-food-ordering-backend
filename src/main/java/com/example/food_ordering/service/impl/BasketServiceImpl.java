@@ -208,8 +208,11 @@ public class BasketServiceImpl implements BasketService {
             basketItemRepository.deleteAll(basketItems);
         }
 
-        basket.setBasketItems(new ArrayList<>());
-        basketRepository.save(basket);
+        if (basket != null) {
+            basket.getBasketItems().clear();
+            basketRepository.save(basket);
+        }
+
 
         return true;
     }

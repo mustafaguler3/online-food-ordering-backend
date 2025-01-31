@@ -5,10 +5,13 @@ import com.example.food_ordering.entities.*;
 import com.example.food_ordering.enums.OrderStatus;
 import com.example.food_ordering.enums.PaymentStatus;
 import com.example.food_ordering.repository.*;
+import com.example.food_ordering.response.OrderResponseDto;
 import com.example.food_ordering.service.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.ResourceNotFoundException;
 import org.springframework.stereotype.Component;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -257,20 +260,28 @@ public class DTOConverter {
 
     public OrderItemDto toOrderItemDto(OrderItem orderItem) {
         OrderItemDto orderItemDto = new OrderItemDto();
+        orderItemDto.setId(orderItem.getId());
+        orderItemDto.setProductName(orderItem.getProduct().getName());
         orderItemDto.setOrderId(orderItem.getOrder().getId());
         orderItemDto.setProductId(orderItem.getProduct().getId());
         orderItemDto.setUnitPrice(orderItem.getUnitPrice());
         orderItemDto.setQuantity(orderItem.getQuantity());
         orderItemDto.setTotalPrice(orderItem.getTotalPrice());
 
+        orderItemDto.setTaxRate(orderItem.getTaxRate());
+        orderItemDto.setDiscountPercentage(orderItem.getDiscountPercentage());
+
         return orderItemDto;
     }
 
     public OrderItem toOrderItemEntity(OrderItemDto orderItemDto) {
         OrderItem orderItem = new OrderItem();
-        Order order = orderRepository.getById(orderItemDto.getOrderId());
+        orderItem.setId(orderItemDto.getId());
+
+        Order order = orderRepository.findById(orderItemDto.getOrderId()).get();
+
         orderItem.setOrder(order);
-        Product product = productRepository.findById(orderItemDto.getProductId()).get();
+        Product product = productRepository.findById(orderItemDto.getProductId()).orElse(null);
         orderItem.setProduct(product);
         orderItem.setUnitPrice(orderItemDto.getUnitPrice());
         orderItem.setQuantity(orderItemDto.getQuantity());
@@ -336,7 +347,7 @@ public class DTOConverter {
         payment.setUser(user);
 
         payment.setPaymentDate(paymentDto.getPaymentDate());
-        payment.setOrder(orderRepository.findById(paymentDto.getId()).get());
+        payment.setOrder(orderRepository.findById((long) paymentDto.getId()).get());
         payment.setCardNumber(paymentDto.getCardNumber());
         payment.setExpiryDate(paymentDto.getExpirationDate());
         payment.setCvv(paymentDto.getCvv());
@@ -351,6 +362,7 @@ public class DTOConverter {
         }
 
         OrderDto orderDto = new OrderDto();
+        orderDto.setRestaurantId((long) order.getRestaurant().getId());
         orderDto.setId(order.getId());
         orderDto.setOrderReferenceNumber(order.getOrderReferenceNumber());
         orderDto.setTotalAmount(order.getTotalAmount());
@@ -367,14 +379,13 @@ public class DTOConverter {
             );
         }
 
-        // Kullanıcı bilgisi
         if (order.getUser() != null) {
             orderDto.setUserId(order.getUser().getId());
         }
 
-        // Payment dönüştürme
-        if (order.getPayment() != null) {
-            orderDto.setPayment(mapToPaymentDto(order.getPayment()));
+
+        if (order.getPayments() != null && !order.getPayments().isEmpty()) {
+            orderDto.setPayments(mapToPaymentDtoList(order.getPayments()));
         }
 
 
@@ -425,10 +436,10 @@ public class DTOConverter {
             order.setUser(user);
         }
 
-        if (orderDto.getPayment() != null) {
-            Payment payment = mapToPaymentEntity(orderDto.getPayment());
-            payment.setOrder(order);
-            order.setPayment(payment);
+        if (orderDto.getPayments() != null && !orderDto.getPayments().isEmpty()) {
+            List<Payment> paymentList = mapToPaymentEntityList(orderDto.getPayments());
+            paymentList.forEach(payment -> payment.setOrder(order)); // Her ödeme nesnesine siparişi ata
+            order.setPayments(paymentList);
         }
 
         if (orderDto.getBasketId() != null) {
@@ -445,6 +456,21 @@ public class DTOConverter {
 
         return order;
     }
+
+    public List<PaymentDto> mapToPaymentDtoList(List<Payment> payments) {
+        if (payments == null || payments.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return payments.stream().map(payment -> mapToPaymentDto(payment)).collect(Collectors.toList());
+    }
+
+    public List<Payment> mapToPaymentEntityList(List<PaymentDto> paymentDtos) {
+        if (paymentDtos == null || paymentDtos.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return paymentDtos.stream().map(payment-> mapToPaymentEntity(payment)).collect(Collectors.toList());
+    }
+
 
     public static PaymentDto mapToPaymentDto(Payment payment) {
         if (payment == null) {
@@ -470,7 +496,7 @@ public class DTOConverter {
 
         return dto;
     }
-    public static Payment mapToPaymentEntity(PaymentDto dto) {
+    public Payment mapToPaymentEntity(PaymentDto dto) {
         if (dto == null) {
             return null;
         }
@@ -507,6 +533,33 @@ public class DTOConverter {
         payment.setCvv(dto.getCvv());
 
         return payment;
+    }
+
+    public OrderResponseDto toOrderResponseDto(OrderDto orderDto) {
+        OrderResponseDto response = new OrderResponseDto();
+        response.setId(orderDto.getId());
+        response.setOrderReferenceNumber(orderDto.getOrderReferenceNumber());
+        response.setTotalAmount(orderDto.getTotalAmount());
+        response.setStatus(orderDto.getStatus());
+        response.setOrderDate(orderDto.getOrderDate());
+        response.setUserId(orderDto.getUserId());
+        Restaurant restaurant = restaurantRepository.findById(orderDto.getRestaurantId()).get();
+        response.setRestaurantIcon(restaurant.getRestaurantIcon());
+        response.setRestaurantName(restaurant.getName());
+        response.setRestaurantId(orderDto.getRestaurantId());
+
+        for (OrderItemDto orderItem : orderDto.getItems()){
+            response.setTaxRate(orderItem.getTaxRate());
+            response.setDiscountPercentage(orderItem.getDiscountPercentage());
+        }
+
+
+        response.setRestaurantAddress(restaurant.getLocation());
+        response.setDeliveryAddress(orderDto.getShippingAddress().getAddressLine1() +"," +orderDto.getShippingAddress().getCity()+"/"+orderDto.getShippingAddress().getCountry());
+        response.setOrderItems(orderDto.getItems());
+
+
+        return response;
     }
 }
 

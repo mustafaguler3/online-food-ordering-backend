@@ -19,9 +19,11 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne
+
+    @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
+
     private String currency;
     @ManyToOne
     @JoinColumn(name = "user_id")

@@ -40,7 +40,6 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentDate(new Date());
         payment.setPaymentReferenceNumber(UUID.randomUUID().toString());
 
-        // Yeni kart ile ödeme kontrolü
         if ("Credit Card".equals(paymentDto.getPaymentMethod()) && paymentDto.getCardNumber() != null) {
             payment.setCardNumber(paymentDto.getCardNumber());
             payment.setCvv(paymentDto.getCvv());
@@ -49,7 +48,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setUser(userRepository.findById(orderDto.getUserId())
                     .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı")));
         }
-        // Kayıtlı kart ile ödeme kontrolü
+
         else if ("Saved Card".equals(paymentDto.getPaymentMethod())) {
             SavedCard savedCard = savedCardRepository.findSavedCardByUserId(orderDto.getUserId());
             if (savedCard != null) {

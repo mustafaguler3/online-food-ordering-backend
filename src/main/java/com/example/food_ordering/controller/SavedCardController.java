@@ -8,6 +8,7 @@ import com.example.food_ordering.service.UserDetailsImpl;
 import com.example.food_ordering.util.CreditCardValidator;
 import com.example.food_ordering.util.CurrentUserProvider;
 import com.example.food_ordering.util.DTOConverter;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,12 +35,12 @@ public class SavedCardController {
     private DTOConverter dtoConverter;
 
     @PostMapping("/save")
-    public ResponseEntity<?> addCreditCard(@RequestBody SavedCardDto savedCardDto) throws ParseException {
+    public ResponseEntity<?> addCreditCard(@Valid @RequestBody SavedCardDto savedCardDto) throws ParseException {
         SavedCard newCard = new SavedCard();
 
-        // Kart numarasının geçerli olup olmadığını kontrol et
         if (!CreditCardValidator.isValidCardNumber(savedCardDto.getCardNumber())) {
-            return new ResponseEntity<>("Invalid card number. Card number must be 16 digits and valid.", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Invalid card number. Card number must be 16 digits and valid.",
+                    HttpStatus.BAD_REQUEST);
         }
 
         // Kart numarası geçerli ise devam et

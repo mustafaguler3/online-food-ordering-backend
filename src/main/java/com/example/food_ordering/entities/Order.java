@@ -16,6 +16,7 @@ import java.util.*;
 @AllArgsConstructor
 @Table(name = "orders")
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,19 +26,26 @@ public class Order {
     @Temporal(TemporalType.TIMESTAMP)
     private Date orderDate;
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-    private List<OrderItem> items;
+    private List<OrderItem> items = new ArrayList<>();
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    @OneToOne(mappedBy = "order",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
-    private Payment payment;
-    @OneToOne
-    @JoinColumn(name = "basket_id")
+
+    @ManyToOne
+    @JoinColumn(name = "restaurant_id")
+    private Restaurant restaurant;
+
+    @OneToMany(mappedBy = "order",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    private List<Payment> payments;
+
+    @ManyToOne
+    @JoinColumn(name = "basket_id",unique = false)
     private Basket basket;
-    @OneToOne
+
+    @ManyToOne
     @JoinColumn(name = "shipping_address_id")
     private Address shippingAddress;
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "billing_address_id")
     private Address billingAddress;
 

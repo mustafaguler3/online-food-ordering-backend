@@ -1,19 +1,15 @@
 package com.example.food_ordering.service.impl;
 
-import com.example.food_ordering.dto.BasketDto;
-import com.example.food_ordering.dto.BasketItemDto;
-import com.example.food_ordering.dto.OrderDto;
-import com.example.food_ordering.dto.OrderItemDto;
+import com.example.food_ordering.dto.*;
 import com.example.food_ordering.entities.*;
 import com.example.food_ordering.enums.OrderStatus;
 import com.example.food_ordering.enums.PaymentStatus;
 import com.example.food_ordering.exceptions.AddressNotFoundException;
 import com.example.food_ordering.exceptions.PaymentException;
-import com.example.food_ordering.repository.AddressRepository;
-import com.example.food_ordering.repository.OrderRepository;
-import com.example.food_ordering.repository.PaymentRepository;
+import com.example.food_ordering.repository.*;
 import com.example.food_ordering.response.OrderResponseDto;
 import com.example.food_ordering.service.*;
+import com.example.food_ordering.util.CurrentUserProvider;
 import com.example.food_ordering.util.DTOConverter;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -36,45 +33,73 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private OrderRepository orderRepository;
     @Autowired
+    private OrderItemRepository orderItemRepository;
+    @Autowired
     private PaymentRepository paymentRepository;
     @Autowired
     private OrderItemService orderItemService;
     @Autowired
     private BasketService basketService;
     @Autowired
+    private CurrentUserProvider currentUserProvider;
+    @Autowired
     private DTOConverter dtoConverter;
     @Autowired
     private AddressRepository addressRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private BasketRepository basketRepository;
+    @Autowired
+    private RestaurantRepository restaurantRepository;
 
 
     @Transactional
     @Override
     public OrderDto createOrder(OrderDto orderDto) {
-        // 1. Kullanıcının aktif sepetini al
+        UserDetailsImpl currentUser = currentUserProvider.getCurrentUserDetails();
+
+        User managedUser = userRepository.findById(currentUser.user.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         BasketDto basket = basketService.findBasketByUserId();
+
         if (basket == null || basket.getItems().isEmpty()) {
             throw new IllegalArgumentException("Basket is empty or not found");
         }
-        // 2. Sipariş oluşturma
+
+        // 1️⃣ Sipariş oluştur
         Order order = initializeOrder(orderDto);
-        // 3. Sepet ürünlerini siparişe ekleme
-        List<OrderItemDto> orderItems =
+
+        // 2️⃣ Sepet ürünlerini siparişe çevir
+        List<OrderItem> orderItems =
                 basket.getItems()
                         .stream()
-                .map(basketItem ->
-                        convertBasketItemToOrderItem(basketItem, order))
+                .map(basketItem -> convertBasketItemToOrderItem(dtoConverter.toBasketItemEntity(basketItem), order))
                 .collect(Collectors.toList());
 
-        order.setItems(dtoConverter.toOrderItemEntityList(orderItems));
+        order.setItems(orderItems);
+
+        for (OrderItem orderItem : orderItems) {
+            order.setRestaurant(orderItem.getProduct().getRestaurant());
+
+            orderItem.setTaxRate(5.0);
+            orderItem.setDiscountPercentage(5.0);
+            orderItem.getTotalPrice();
+        }
+
+
 
         Address address;
-        if (orderDto.getAddressId() > 0) {
+        if (orderDto.getAddressId() != null && orderDto.getAddressId() > 0) {
             address = addressRepository.findById(orderDto.getAddressId())
                     .orElseThrow(() -> new AddressNotFoundException("Address not found with ID: " + orderDto.getAddressId()));
         } else {
+
             address = new Address();
             address.setAddressLine1(orderDto.getShippingAddress().getAddressLine1());
             address.setAddressLine2(orderDto.getShippingAddress().getAddressLine2());
+            address.setUser(managedUser);
             address.setCity(orderDto.getShippingAddress().getCity());
             address.setState(orderDto.getShippingAddress().getState());
             address.setZipCode(orderDto.getShippingAddress().getZipCode());
@@ -86,35 +111,47 @@ public class OrderServiceImpl implements OrderService {
 
         order.setShippingAddress(address);
         order.setTotalAmount(basket.getGrandTotal());
-        order.setItems(dtoConverter.toOrderItemEntityList(orderItems));
-        // 4. Siparişi kaydetme
+
         Order savedOrder = orderRepository.save(order);
 
-        // 5. Ödeme işlemi
-        boolean payment = paymentService.processPayment(orderDto.getPayment(), dtoConverter.mapToOrderDto(savedOrder));
-        // 6. Sipariş durumunu güncelleme
-        if (payment) {
-            savedOrder.setStatus(OrderStatus.PROCESSING);
+        if (savedOrder.getId() == null) {
+            throw new RuntimeException("Order was not saved successfully");
+        }
+        System.out.println("Saved Order ID: " + savedOrder.getId());
 
+        List<PaymentDto> paymentDtos = orderDto.getPayments();
+        boolean paymentSuccessful = true;
+
+        if (paymentDtos != null && !paymentDtos.isEmpty()) {
+            for (PaymentDto paymentDto : paymentDtos) {
+                boolean success = paymentService.processPayment(paymentDto, dtoConverter.mapToOrderDto(savedOrder));
+                if (!success) {
+                    paymentSuccessful = false;
+                    break;
+                }
+            }
+        }
+
+        if (paymentSuccessful) {
+            savedOrder.setStatus(OrderStatus.PROCESSING);
             orderRepository.save(savedOrder);
-            // 7. Sepeti temizleme
             basketService.clearBasket();
         } else {
             savedOrder.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(savedOrder);
             throw new PaymentException("Payment failed, order not completed");
         }
-
         return orderDto;
     }
-    private OrderItemDto convertBasketItemToOrderItem(BasketItemDto basketItem, Order order) {
+
+    private OrderItem convertBasketItemToOrderItem(BasketItem basketItem,Order order) {
         System.out.println("Converting BasketItem to OrderItem");
         System.out.println("BasketItem Unit Price: " + basketItem.getUnitPrice());
         System.out.println("BasketItem Total Price: " + basketItem.getTotalPrice());
 
-        OrderItemDto orderItem = new OrderItemDto();
-        orderItem.setOrderId(basketItem.getBasketId());
-        orderItem.setProductId(basketItem.getProductId());
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(order);
+        orderItem.setProduct(basketItem.getProduct());
         orderItem.setQuantity(basketItem.getQuantity());
         orderItem.setUnitPrice(basketItem.getUnitPrice());
         orderItem.setTotalPrice(basketItem.getTotalPrice());
@@ -124,7 +161,6 @@ public class OrderServiceImpl implements OrderService {
 
     private Order initializeOrder(OrderDto orderDto) {
         Order order = new Order();
-        order.setId(orderDto.getId());
         order.setStatus(OrderStatus.PENDING);
         order.setOrderDate(new Date());
         order.setOrderReferenceNumber(UUID.randomUUID().toString());
@@ -132,6 +168,10 @@ public class OrderServiceImpl implements OrderService {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         order.setUser(userDetails.user);
         order.setBasket(userDetails.user.getBasket());
+
+
+
+
         return order;
     }
 
@@ -143,6 +183,37 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderDto updateOrderStatus(Long orderId, String status) {
         return null;
+    }
+
+
+    @Override
+    public List<OrderResponseDto> getUserOrders() {
+        UserDetailsImpl userDetails = currentUserProvider.getCurrentUserDetails();
+
+        List<Order> orders = orderRepository.findOrdersByUserId(userDetails.user.getId());
+
+        if (orders == null) {
+            throw new RuntimeException("No orders found for user: " + userDetails.getUsername());
+        }
+
+        List<OrderDto> orderDtos =
+                orders.stream().map(orderDto -> dtoConverter.mapToOrderDto(orderDto)).toList();
+
+        List<OrderResponseDto> orderResponseDtos =
+                orderDtos.stream()
+                        .map(orderDto -> dtoConverter.toOrderResponseDto(orderDto)).toList();
+
+        return orderResponseDtos;
+    }
+
+    @Override
+    public OrderResponseDto getOrderByOrderId(Long orderId) {
+        Order order = orderRepository.findOrderById(orderId);
+        if (order == null) {
+            throw new RuntimeException("No orders found for user: " + orderId);
+        }
+        OrderDto orderDto = dtoConverter.mapToOrderDto(order);
+        return dtoConverter.toOrderResponseDto(orderDto);
     }
 }
 
